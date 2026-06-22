@@ -448,6 +448,7 @@ All modules should contain:
 - Module-level docstrings.
 - Function docstrings.
 - Type hints.
+- README explaining the module logic and its way of working.
 
 Example:
 
