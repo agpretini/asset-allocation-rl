@@ -31,32 +31,7 @@ The initial asset classes are:
 3. S&P500
 4. Gold
 
-Each asset class will be represented by a representative instrument or index to be defined during implementation.
-
----
-
-# Data Sources
-
-The initial implementation will use historical monthly data.
-
-Candidate data sources include:
-
-- Yahoo Finance
-- Stooq
-- FRED (macroeconomic indicators)
-
-Representative instruments will be defined during implementation.
-
-Potential examples:
-
-| Asset Class | Representative Instrument |
-|------------|------------|
-| Argentine Equities | TBD |
-| CEDEARs | TBD |
-| S&P500 | SPY |
-| Gold | GLD |
-
-The exact mapping between asset classes and instruments is intentionally left open for future experimentation.
+The concrete implementation of each asset class is defined in `DATA_DECISIONS.md`.
 
 ---
 
@@ -66,30 +41,147 @@ The problem is modeled as a Markov Decision Process (MDP).
 
 ## State
 
-The state represents the current market environment and portfolio situation.
+The state represents the current market environment and the current portfolio situation.
 
-The final state representation will be determined through experimentation, but may initially include:
+The Version 1 state definition is fixed and consists of the following variables.
 
 ### Market Variables
 
-- Argentine Equities momentum
-- CEDEAR momentum
-- S&P500 momentum
-- Gold momentum
-- Recent volatility of each asset class
-- Recent returns
-- Inflation
+For each asset class:
+
+- Argentine Equities
+- CEDEARs
+- S&P500
+- Gold
+
+the following features are included:
+
+#### Momentum Features
+
+- 1-month momentum
+- 3-month momentum
+- 6-month momentum
+- 12-month momentum
+
+#### Volatility Features
+
+- 3-month rolling volatility
+- 6-month rolling volatility
+- 12-month rolling volatility
+
+This produces:
+
+```text
+4 assets × (4 momentum features + 3 volatility features)
+= 28 features
+```
+
+### Macroeconomic Variables
+
+The following macroeconomic variables are included:
+
 - USD/ARS exchange rate
-- VIX as a global risk indicator
+- Monthly inflation rate
+- VIX level
+
+This produces:
+
+```text
+3 features
+```
 
 ### Portfolio Variables
 
-- Current portfolio allocation
-- Portfolio value
-- Current drawdown
+The portfolio state includes:
 
-The final state design must avoid data leakage and only use information available at the time the decision is made.
+- Current weight in Argentine Equities
+- Current weight in CEDEARs
+- Current weight in S&P500
+- Current weight in Gold
+- Current portfolio drawdown
 
+This produces:
+
+```text
+5 features
+```
+
+### State Dimension
+
+The complete state vector contains:
+
+```text
+28 market features
++ 3 macro features
++ 5 portfolio features
+
+= 36 total features
+```
+
+### State Vector
+
+Conceptually:
+
+```text
+State_t = [
+
+    ARG_mom_1m,
+    ARG_mom_3m,
+    ARG_mom_6m,
+    ARG_mom_12m,
+
+    ARG_vol_3m,
+    ARG_vol_6m,
+    ARG_vol_12m,
+
+    CED_mom_1m,
+    CED_mom_3m,
+    CED_mom_6m,
+    CED_mom_12m,
+
+    CED_vol_3m,
+    CED_vol_6m,
+    CED_vol_12m,
+
+    SPY_mom_1m,
+    SPY_mom_3m,
+    SPY_mom_6m,
+    SPY_mom_12m,
+
+    SPY_vol_3m,
+    SPY_vol_6m,
+    SPY_vol_12m,
+
+    GLD_mom_1m,
+    GLD_mom_3m,
+    GLD_mom_6m,
+    GLD_mom_12m,
+
+    GLD_vol_3m,
+    GLD_vol_6m,
+    GLD_vol_12m,
+
+    usd_ars,
+    inflation,
+    vix,
+
+    w_arg,
+    w_ced,
+    w_sp500,
+    w_gold,
+
+    current_drawdown
+
+]
+```
+
+### Data Leakage Constraint
+
+Every feature in the state must be computed exclusively using information available at time t.
+
+No future observations may be used when constructing the state.
+
+This requirement is mandatory and must be enforced throughout the project.
 ---
 
 ## Action Space
@@ -114,7 +206,7 @@ w_arg + w_ced + w_sp500 + w_gold = 100%
 and
 
 ```text
-w_i ∈ {0%,10%,20%,...,100%}
+w_i ∈ {0%, 10%, 20%, ..., 100%}
 ```
 
 This produces:
@@ -140,11 +232,9 @@ Example:
 
 ## Decision Frequency
 
-The decision frequency is monthly.
+The environment operates on a fixed decision frequency.
 
-Each environment step represents one calendar month.
-
-Daily frequency is intentionally avoided in order to reduce noise, overfitting, and excessive trading activity.
+The specific frequency used by the implementation is defined in `DATA_DECISIONS.md`.
 
 ---
 
@@ -152,7 +242,7 @@ Daily frequency is intentionally avoided in order to reduce noise, overfitting, 
 
 After selecting a portfolio:
 
-1. The market evolves during the next month.
+1. The market evolves during the next period.
 2. Asset returns are observed.
 3. Portfolio return is calculated.
 4. Portfolio value is updated.
@@ -176,17 +266,18 @@ Let:
 R_portfolio,t
 ```
 
-be the monthly portfolio return.
+be the portfolio return for a single environment step.
 
-It is calculated as:
+The exact return calculation methodology is defined in `DATA_DECISIONS.md`.
+
+Conceptually:
 
 ```text
 R_portfolio,t =
-w_arg * R_arg,t +
-w_ced * R_ced,t +
-w_sp500 * R_sp500,t +
-w_gold * R_gold,t
+Σ (weight_i × asset_return_i)
 ```
+
+---
 
 ## Rebalancing Costs
 
@@ -215,6 +306,8 @@ rebalance_cost_t =
 0.014 * turnover_t
 ```
 
+---
+
 ## Reward
 
 The training reward is defined as:
@@ -242,7 +335,14 @@ Candidate approaches:
 - Deep Q Network (DQN)
 - Double DQN
 
-Continuous-action algorithms such as PPO, DDPG, SAC, or TD3 are considered out of scope for the initial implementation.
+Continuous-action algorithms such as:
+
+- PPO
+- DDPG
+- SAC
+- TD3
+
+are considered out of scope for the initial implementation.
 
 ---
 
@@ -304,23 +404,11 @@ The initial benchmark set consists of:
 
 100% S&P500
 
-Fixed allocation:
-
-```text
-SP500 = 100%
-```
-
 ## Benchmark 2
 
-50% S&P500
-50% Gold
+50% S&P500 / 50% Gold
 
-Fixed allocation:
-
-```text
-SP500 = 50%
-Gold = 50%
-```
+The exact implementation of these benchmarks is defined in `DATA_DECISIONS.md`.
 
 The agent will only be considered successful if it consistently outperforms these benchmarks on relevant return and risk metrics.
 
@@ -331,11 +419,11 @@ The agent will only be considered successful if it consistently outperforms thes
 1. Simplicity before complexity.
 2. Avoid overfitting.
 3. Maintain interpretability.
-4. Use monthly decision frequency.
-5. Incorporate realistic transaction costs.
-6. Always compare against passive benchmarks.
-7. Validate out-of-sample before drawing conclusions.
-8. Treat the project as an asset allocation system, not a price prediction system.
+4. Incorporate realistic transaction costs.
+5. Always compare against passive benchmarks.
+6. Validate out-of-sample before drawing conclusions.
+7. Treat the project as an asset allocation system, not a price prediction system.
+8. Prioritize robustness over short-term performance.
 
 ---
 
@@ -348,6 +436,6 @@ This project does NOT attempt to:
 - Perform stock picking.
 - Trade intraday.
 - Optimize tax treatment.
-- Perform market timing at high frequency.
+- Perform high-frequency market timing.
 
 The sole objective of this project is dynamic asset allocation across a predefined set of asset classes.
