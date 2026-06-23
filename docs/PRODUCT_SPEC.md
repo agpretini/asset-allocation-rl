@@ -63,6 +63,21 @@ the following features are included:
 - 6-month momentum
 - 12-month momentum
 
+Momentum is defined as cumulative simple return over the corresponding lookback window.
+
+Examples:
+
+```text
+mom_1m = P_t / P_t-1 - 1
+
+mom_3m = P_t / P_t-3 - 1
+
+mom_6m = P_t / P_t-6 - 1
+
+mom_12m = P_t / P_t-12 - 1
+```
+
+
 #### Volatility Features
 
 - 3-month rolling volatility
@@ -74,6 +89,18 @@ This produces:
 ```text
 4 assets × (4 momentum features + 3 volatility features)
 = 28 features
+```
+
+Volatility is defined as the rolling standard deviation of monthly returns.
+
+Examples:
+
+```text
+vol_3m = std(R_t, R_t-1, R_t-2)
+
+vol_6m = rolling std over last 6 monthly returns
+
+vol_12m = rolling std over last 12 monthly returns
 ```
 
 ### Macroeconomic Variables
@@ -98,12 +125,11 @@ The portfolio state includes:
 - Current weight in CEDEARs
 - Current weight in S&P500
 - Current weight in Gold
-- Current portfolio drawdown
 
 This produces:
 
 ```text
-5 features
+4 features
 ```
 
 ### State Dimension
@@ -113,9 +139,9 @@ The complete state vector contains:
 ```text
 28 market features
 + 3 macro features
-+ 5 portfolio features
++ 4 portfolio features
 
-= 36 total features
+= 35 total features
 ```
 
 ### State Vector
@@ -168,9 +194,7 @@ State_t = [
     w_arg,
     w_ced,
     w_sp500,
-    w_gold,
-
-    current_drawdown
+    w_gold
 
 ]
 ```
