@@ -1,0 +1,76 @@
+start_date: "2016-01-01"
+data_source: yahoo_finance
+
+asset_order:
+  - arg
+  - ced
+  - sp500
+  - gold
+
+assets:
+  arg:
+    name: Argentine Equities
+    representative_instrument: Equal-weight Argentine ADR basket
+    tickers:
+      - GGAL
+      - YPF
+      - CRESY
+      - LOMA
+      - TX
+    price_column: price_arg
+    return_column: r_arg
+  ced:
+    name: CEDEARs
+    representative_instrument: Equal-weight CEDEAR representative basket
+    tickers:
+      - GOOGL
+      - ASML
+      - MELI
+      - META
+      - MSFT
+      - NVDA
+      - KO
+    price_column: price_ced
+    return_column: r_ced
+  sp500:
+    name: S&P500
+    representative_instrument: SPY ETF
+    tickers:
+      - SPY
+    price_column: price_sp500
+    return_column: r_sp500
+  gold:
+    name: Gold
+    representative_instrument: GLD ETF
+    tickers:
+      - GLD
+    price_column: price_gold
+    return_column: r_gold
+
+macro_columns:
+  - usd_ars
+  - vix
+
+macro_sources:
+  usd_ars:
+    ticker: USDARS=X
+  vix:
+    ticker: ^VIX
+
+processed_dataset_path: data/processed/monthly_dataset.parquet
+
+benchmarks:
+  sp500:
+    name: 100% S&P500
+    weights:
+      r_arg: 0.0
+      r_ced: 0.0
+      r_sp500: 1.0
+      r_gold: 0.0
+  sp500_gold_50_50:
+    name: 50% S&P500 / 50% Gold
+    weights:
+      r_arg: 0.0
+      r_ced: 0.0
+      r_sp500: 0.5
+      r_gold: 0.5

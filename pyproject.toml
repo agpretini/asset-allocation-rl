@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Reinforcement learning research for dynamic asset allocation."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "pyarrow>=16.0",
+    "pyyaml>=6.0",
+    "yfinance>=0.2.66",
+]
 
 [dependency-groups]
 dev = [
