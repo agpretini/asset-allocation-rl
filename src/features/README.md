@@ -10,3 +10,6 @@ Market features are computed from information available at time `t` only:
 
 The state builder appends the current portfolio weights to those market
 features. It does not use future returns.
+
+Current real-data state size is 34 because the processed Yahoo Finance dataset
+contains `usd_ars` and `vix`, but no configured inflation source yet.

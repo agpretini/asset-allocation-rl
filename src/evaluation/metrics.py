@@ -75,8 +75,10 @@ def calculate_sortino(
 ) -> float:
     """Calculate annualized Sortino ratio using downside volatility."""
     downside_returns = monthly_returns[monthly_returns < 0.0]
+    if downside_returns.empty:
+        return 0.0
     downside_volatility = float(downside_returns.std(ddof=0) * sqrt(periods_per_year))
-    if downside_volatility == 0.0:
+    if pd.isna(downside_volatility) or downside_volatility == 0.0:
         return 0.0
     annualized_return = float(monthly_returns.mean() * periods_per_year)
     return annualized_return / downside_volatility

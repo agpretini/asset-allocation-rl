@@ -1,4 +1,4 @@
-"""Build data/processed/monthly_dataset.parquet from raw CSV inputs."""
+"""Build the processed monthly dataset from Yahoo Finance inputs."""
 
 import sys
 from pathlib import Path

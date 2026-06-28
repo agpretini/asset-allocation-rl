@@ -85,7 +85,7 @@ modules.
 Generate:
 
 ```text
-data/processed/monthly_dataset.parquet
+data/processed/dataset/monthly_dataset.parquet
 ```
 
 containing:

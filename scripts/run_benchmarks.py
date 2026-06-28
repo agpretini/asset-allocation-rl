@@ -21,7 +21,7 @@ def main() -> None:
     results = run_benchmarks(dataset[return_columns])
     report = build_benchmark_report(results)
 
-    output_path = Path("data/processed/benchmark_report.csv")
+    output_path = Path("data/processed/benchmarks/benchmark_report.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     report.to_csv(output_path)
     print(output_path)

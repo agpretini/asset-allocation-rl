@@ -1,0 +1,8 @@
+discount_factor: 0.95
+episodes: 25
+epsilon: 0.2
+epsilon_decay: 0.95
+learning_rate: 0.05
+min_epsilon: 0.02
+seed: 42
+state_precision: 2

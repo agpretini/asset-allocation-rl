@@ -57,7 +57,7 @@ macro_sources:
   vix:
     ticker: ^VIX
 
-processed_dataset_path: data/processed/monthly_dataset.parquet
+processed_dataset_path: data/processed/dataset/monthly_dataset.parquet
 
 benchmarks:
   sp500:

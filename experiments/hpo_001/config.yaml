@@ -1,0 +1,17 @@
+dataset: data/processed/dataset/monthly_dataset.parquet
+objective: maximize mean walk-forward score
+search_space:
+  episodes:
+  - 15
+  - 25
+  epsilon_decays:
+  - 0.9
+  - 0.95
+  epsilons:
+  - 0.2
+  - 0.3
+  learning_rates:
+  - 0.05
+  - 0.1
+  state_precisions:
+  - 2

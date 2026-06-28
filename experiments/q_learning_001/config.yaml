@@ -1,0 +1,4 @@
+agent_type: q_learning
+dataset: data/processed/dataset/monthly_dataset.parquet
+feature_set: market_momentum_volatility_macro_plus_weights
+reward: portfolio_return - 0.014 * turnover

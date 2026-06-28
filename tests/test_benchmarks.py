@@ -5,6 +5,7 @@ import pytest
 
 from backtesting.benchmarks import Benchmark, run_benchmarks
 from backtesting.engine import run_fixed_weight_backtest
+from evaluation.report import build_performance_report
 
 
 def test_fixed_weight_backtest_applies_weighted_returns() -> None:
@@ -43,3 +44,19 @@ def test_run_benchmarks_returns_one_result_per_benchmark() -> None:
 
     assert set(results) == {"sp500", "gold"}
     assert results["sp500"]["portfolio_return"].iloc[0] == pytest.approx(0.01)
+
+
+def test_performance_report_prefers_net_reward_when_available() -> None:
+    result = pd.DataFrame(
+        {
+            "portfolio_return": [0.05],
+            "reward": [0.04],
+            "portfolio_value": [1.04],
+            "turnover": [0.1],
+        },
+        index=pd.date_range("2021-01-31", periods=1, freq="ME"),
+    )
+
+    report = build_performance_report({"strategy": result})
+
+    assert report.loc["strategy", "cagr"] == pytest.approx(1.04**12 - 1.0)

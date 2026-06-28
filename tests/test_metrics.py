@@ -8,6 +8,7 @@ from evaluation.metrics import (
     calculate_cagr,
     calculate_maximum_drawdown,
     calculate_performance_metrics,
+    calculate_sortino,
 )
 
 
@@ -51,3 +52,9 @@ def test_performance_metrics_include_required_fields() -> None:
         "average_turnover",
     }
     assert metrics["average_turnover"] == pytest.approx(turnover.mean())
+
+
+def test_sortino_returns_zero_without_downside_returns() -> None:
+    monthly_returns = pd.Series([0.01, 0.02, 0.03])
+
+    assert calculate_sortino(monthly_returns) == 0.0

@@ -1,0 +1,16 @@
+{
+  "trial_id": 9.0,
+  "episodes": 25.0,
+  "learning_rate": 0.05,
+  "discount_factor": 0.95,
+  "epsilon": 0.2,
+  "min_epsilon": 0.02,
+  "epsilon_decay": 0.95,
+  "state_precision": 2.0,
+  "seed": 42.0,
+  "mean_cagr": 0.42715158548728593,
+  "mean_sharpe": 3.40925052399555,
+  "mean_maximum_drawdown": -0.029222645089636512,
+  "mean_average_turnover": 0.42954545454545456,
+  "score": 3.8071794643931995
+}
