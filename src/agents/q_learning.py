@@ -79,6 +79,14 @@ class QLearningAgent:
         """Switch between training and greedy evaluation mode."""
         self.training = training
 
+    def state_key(self, state: Sequence[float]) -> str:
+        """Return the discretized key used by the Q-table for a state."""
+        return self._state_key(state)
+
+    def q_values_for_state(self, state: Sequence[float]) -> list[float]:
+        """Return Q-values for a state, initializing unseen states."""
+        return self._get_q_values(self._state_key(state))
+
     def save(self, path: str | Path) -> Path:
         """Save the Q-table and hyperparameters as JSON."""
         destination = Path(path)

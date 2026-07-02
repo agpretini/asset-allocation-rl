@@ -1,0 +1,3 @@
+method,signal_date,target_period,action_id,w_arg,w_ced,w_sp500,w_gold,q_value,score,score_name,state_source,nearest_state_distance,expected_turnover
+myopic_greedy_latest_return,2026-06-30,2026-07,275,0.0,0.0,1.0,0.0,0.0,-0.01283571434565034,latest_observed_return_proxy,latest_observed_returns,0.0,0.75
+infinite_horizon_q_learning,2026-06-30,2026-07,111,0.3,0.1,0.0,0.6,0.004325241733817143,0.004325241733817143,discounted_q_value,nearest_learned_state,29.76625033649983,0.39999999999999997

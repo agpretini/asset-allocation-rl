@@ -17,6 +17,7 @@ uv run python scripts/optimize_hyperparameters.py
 uv run python scripts/evaluate_results.py
 uv run python scripts/analyze_portfolio.py
 uv run python scripts/compare_results.py
+uv run python scripts/predict_next_allocation.py
 ```
 
 ## Script Reference
@@ -106,3 +107,16 @@ Outputs:
 - `data/processed/comparison/model_vs_baselines.md`
 - `data/processed/comparison/model_vs_baselines_report.csv`
 - `data/processed/comparison/model_vs_baselines_deltas.csv`
+
+### `predict_next_allocation.py`
+
+Trains Q-learning on all available data using the best known hyperparameters
+and writes a forward-looking allocation signal for the next month.
+
+Outputs:
+
+- `data/processed/predictions/YYYY-MM/allocation_predictions.csv`
+- `data/processed/predictions/YYYY-MM/allocation_prediction.csv`
+- `data/processed/predictions/YYYY-MM/prediction_metadata.json`
+- `data/processed/predictions/YYYY-MM/trained_model.json`
+- `data/processed/predictions/YYYY-MM/training_history.csv`

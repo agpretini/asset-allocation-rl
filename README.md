@@ -73,6 +73,12 @@ Compare the model against all baselines:
 uv run python scripts/compare_results.py
 ```
 
+Train on all available data and predict the next monthly allocation:
+
+```bash
+uv run python scripts/predict_next_allocation.py
+```
+
 The data layer downloads real Yahoo Finance close prices for the configured
 asset universe, then builds monthly USD return series for the Argentine equity
 basket, CEDEAR basket, SPY, and GLD.
@@ -87,6 +93,7 @@ Generated artifacts:
 - `data/processed/optimization/hyperparameter_results.csv`
 - `data/processed/analysis/portfolio_analysis.md`
 - `data/processed/comparison/model_vs_baselines.md`
+- `data/processed/predictions/YYYY-MM/allocation_predictions.csv`
 
 See `data/README.md` for the full output directory map.
 
