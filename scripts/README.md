@@ -13,6 +13,7 @@ uv run python scripts/run_benchmarks.py
 uv run python scripts/run_backtest.py
 uv run python scripts/train_agent.py
 uv run python scripts/run_walk_forward.py
+uv run python scripts/compare_feature_modes.py
 uv run python scripts/optimize_hyperparameters.py
 uv run python scripts/evaluate_results.py
 uv run python scripts/analyze_portfolio.py
@@ -67,6 +68,20 @@ Outputs:
 - `data/processed/walk_forward/walk_forward_report.csv`
 - `data/processed/walk_forward/walk_forward_paths.csv`
 
+### `compare_feature_modes.py`
+
+Runs the same walk-forward Q-learning evaluation for:
+
+- `raw`: original unnormalized market features.
+- `normalized_binned`: USD/ARS change, expanding z-score normalization, and
+  discrete financial regime bins.
+
+Outputs:
+
+- `data/processed/feature_modes/feature_mode_report.csv`
+- `data/processed/feature_modes/feature_mode_paths.csv`
+- `data/processed/feature_modes/feature_mode_decisions.csv`
+
 ### `optimize_hyperparameters.py`
 
 Runs Q-learning hyperparameter optimization over walk-forward splits.
@@ -113,6 +128,13 @@ Outputs:
 Trains Q-learning on all available data using the best known hyperparameters
 and writes a forward-looking allocation signal for the next month.
 
+By default it uses the original raw state features. To generate the
+normalized-binned version without overwriting the raw prediction:
+
+```bash
+uv run python scripts/predict_next_allocation.py --feature-mode normalized_binned
+```
+
 Outputs:
 
 - `data/processed/predictions/YYYY-MM/allocation_predictions.csv`
@@ -120,3 +142,5 @@ Outputs:
 - `data/processed/predictions/YYYY-MM/prediction_metadata.json`
 - `data/processed/predictions/YYYY-MM/trained_model.json`
 - `data/processed/predictions/YYYY-MM/training_history.csv`
+- `data/processed/predictions/YYYY-MM/normalized_binned/` when using
+  `--feature-mode normalized_binned`

@@ -4,7 +4,16 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from features.market_features import build_market_features
+from features.market_features import (
+    MACRO_MODE_CHANGE,
+    MACRO_MODE_LEVEL,
+    build_market_features,
+)
+from features.transforms import (
+    NORMALIZED_BINNED_FEATURE_MODE,
+    FeatureMode,
+    transform_market_features,
+)
 
 
 @dataclass(frozen=True)
@@ -22,6 +31,7 @@ class StateBuilder:
         dataset: pd.DataFrame,
         asset_prefixes: list[str] | None = None,
         macro_columns: list[str] | None = None,
+        feature_mode: FeatureMode = "raw",
     ) -> None:
         """Prepare reusable market features for one dataset."""
         self.dataset = dataset
@@ -31,11 +41,22 @@ class StateBuilder:
             for column in ["usd_ars", "inflation", "vix"]
             if column in dataset.columns
         ]
+        self.feature_mode = feature_mode
         self.return_columns = [f"r_{prefix}" for prefix in self.asset_prefixes]
-        self.market_features = build_market_features(
+        macro_mode = (
+            MACRO_MODE_CHANGE
+            if feature_mode == NORMALIZED_BINNED_FEATURE_MODE
+            else MACRO_MODE_LEVEL
+        )
+        raw_market_features = build_market_features(
             dataset=dataset,
             asset_prefixes=self.asset_prefixes,
             macro_columns=self.macro_columns,
+            macro_mode=macro_mode,
+        )
+        self.market_features = transform_market_features(
+            raw_market_features,
+            feature_mode=feature_mode,
         )
 
     def build_state(

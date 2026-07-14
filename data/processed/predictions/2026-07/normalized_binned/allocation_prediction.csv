@@ -1,0 +1,2 @@
+method,signal_date,target_period,action_id,w_arg,w_ced,w_sp500,w_gold,q_value,score,score_name,state_source,nearest_state_distance,expected_turnover
+infinite_horizon_q_learning,2026-06-30,2026-07,0,1.0,0.0,0.0,0.0,0.0,0.0,discounted_q_value,nearest_learned_state,5.199038372622383,0.75

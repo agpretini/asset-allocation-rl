@@ -49,6 +49,12 @@ Run walk-forward evaluation:
 uv run python scripts/run_walk_forward.py
 ```
 
+Compare raw and normalized-binned state features with walk-forward evaluation:
+
+```bash
+uv run python scripts/compare_feature_modes.py
+```
+
 Track the current Q-learning evaluation as an experiment:
 
 ```bash
@@ -79,6 +85,12 @@ Train on all available data and predict the next monthly allocation:
 uv run python scripts/predict_next_allocation.py
 ```
 
+Generate the same prediction with normalized-binned features:
+
+```bash
+uv run python scripts/predict_next_allocation.py --feature-mode normalized_binned
+```
+
 The data layer downloads real Yahoo Finance close prices for the configured
 asset universe, then builds monthly USD return series for the Argentine equity
 basket, CEDEAR basket, SPY, and GLD.
@@ -90,6 +102,7 @@ Generated artifacts:
 - `data/processed/baselines/baseline_report.csv`
 - `data/processed/q_learning/q_learning_report.csv`
 - `data/processed/walk_forward/walk_forward_report.csv`
+- `data/processed/feature_modes/feature_mode_report.csv`
 - `data/processed/optimization/hyperparameter_results.csv`
 - `data/processed/analysis/portfolio_analysis.md`
 - `data/processed/comparison/model_vs_baselines.md`
@@ -129,6 +142,9 @@ Important reports:
 - `data/processed/comparison/model_vs_baselines.md`: model vs all baselines.
 - `data/processed/walk_forward/walk_forward_report.csv`: robustness across
   rolling historical windows.
+- `data/processed/feature_modes/feature_mode_report.csv`: whether the
+  normalized-binned state representation improves walk-forward behavior versus
+  the original raw state.
 - `data/processed/analysis/portfolio_analysis.md`: allocation behavior,
   turnover, drawdowns, and regime behavior.
 - `data/processed/optimization/hyperparameter_results.csv`: whether better

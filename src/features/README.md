@@ -11,5 +11,19 @@ Market features are computed from information available at time `t` only:
 The state builder appends the current portfolio weights to those market
 features. It does not use future returns.
 
+## Feature Modes
+
+`StateBuilder` supports two feature modes:
+
+- `raw`: the original representation. Momentum, volatility, and macro values
+  are passed directly into the tabular state after rounding inside the agent.
+- `normalized_binned`: the comparison representation. It replaces the USD/ARS
+  level with `usd_ars_change`, normalizes market features with expanding
+  z-scores using only information available up to time `t`, and discretizes
+  those z-scores into regime bins from `-3` to `3`.
+
+The default remains `raw`, so existing training and backtesting outputs are
+preserved unless a caller explicitly selects `normalized_binned`.
+
 Current real-data state size is 34 because the processed Yahoo Finance dataset
 contains `usd_ars` and `vix`, but no configured inflation source yet.

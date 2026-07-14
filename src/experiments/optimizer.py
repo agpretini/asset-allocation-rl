@@ -8,6 +8,7 @@ import pandas as pd
 from agents.training import QLearningTrainingConfig
 from backtesting.splitter import WalkForwardSplit
 from backtesting.walk_forward import run_walk_forward_q_learning
+from features.transforms import FeatureMode
 
 
 @dataclass(frozen=True)
@@ -15,6 +16,7 @@ class HyperparameterTrial:
     """One hyperparameter optimization result."""
 
     trial_id: int
+    feature_mode: FeatureMode
     config: QLearningTrainingConfig
     mean_cagr: float
     mean_sharpe: float
@@ -31,9 +33,11 @@ def run_q_learning_grid_search(
     epsilons: list[float] | None = None,
     epsilon_decays: list[float] | None = None,
     state_precisions: list[int] | None = None,
+    feature_modes: list[FeatureMode] | None = None,
     seed: int = 42,
 ) -> tuple[pd.DataFrame, QLearningTrainingConfig]:
     """Evaluate a small Q-learning hyperparameter grid."""
+    selected_feature_modes = feature_modes or ["raw"]
     trial_configs = _build_trial_configs(
         episodes=episodes or [15, 25],
         learning_rates=learning_rates or [0.05, 0.10],
@@ -44,24 +48,34 @@ def run_q_learning_grid_search(
     )
 
     rows: list[dict] = []
-    for trial_id, config in enumerate(trial_configs):
-        report, _ = run_walk_forward_q_learning(
-            dataset=dataset,
-            splits=splits,
-            training_config=config,
-        )
-        summary = _summarize_trial(trial_id=trial_id, config=config, report=report)
-        rows.append(
-            {
-                "trial_id": summary.trial_id,
-                **asdict(summary.config),
-                "mean_cagr": summary.mean_cagr,
-                "mean_sharpe": summary.mean_sharpe,
-                "mean_maximum_drawdown": summary.mean_maximum_drawdown,
-                "mean_average_turnover": summary.mean_average_turnover,
-                "score": summary.score,
-            },
-        )
+    trial_id = 0
+    for feature_mode in selected_feature_modes:
+        for config in trial_configs:
+            report, _ = run_walk_forward_q_learning(
+                dataset=dataset,
+                splits=splits,
+                training_config=config,
+                feature_mode=feature_mode,
+            )
+            summary = _summarize_trial(
+                trial_id=trial_id,
+                feature_mode=feature_mode,
+                config=config,
+                report=report,
+            )
+            rows.append(
+                {
+                    "trial_id": summary.trial_id,
+                    "feature_mode": summary.feature_mode,
+                    **asdict(summary.config),
+                    "mean_cagr": summary.mean_cagr,
+                    "mean_sharpe": summary.mean_sharpe,
+                    "mean_maximum_drawdown": summary.mean_maximum_drawdown,
+                    "mean_average_turnover": summary.mean_average_turnover,
+                    "score": summary.score,
+                },
+            )
+            trial_id += 1
 
     results = pd.DataFrame(rows).sort_values(
         ["score", "mean_cagr"],
@@ -117,6 +131,7 @@ def _build_trial_configs(
 
 def _summarize_trial(
     trial_id: int,
+    feature_mode: FeatureMode,
     config: QLearningTrainingConfig,
     report: pd.DataFrame,
 ) -> HyperparameterTrial:
@@ -128,6 +143,7 @@ def _summarize_trial(
     score = mean_sharpe + mean_cagr + mean_maximum_drawdown
     return HyperparameterTrial(
         trial_id=trial_id,
+        feature_mode=feature_mode,
         config=config,
         mean_cagr=mean_cagr,
         mean_sharpe=mean_sharpe,

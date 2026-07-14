@@ -3,6 +3,7 @@
 import pandas as pd
 
 from agents.training import QLearningTrainingConfig
+from backtesting.feature_modes import run_feature_mode_walk_forward_comparison
 from backtesting.splitter import generate_walk_forward_splits
 from backtesting.walk_forward import run_walk_forward_q_learning
 
@@ -30,7 +31,7 @@ def test_walk_forward_q_learning_returns_report_and_paths() -> None:
         dates=dataset.index,
         train_months=24,
         validation_months=6,
-        test_months=14,
+        test_months=18,
         step_months=6,
     )
 
@@ -45,6 +46,29 @@ def test_walk_forward_q_learning_returns_report_and_paths() -> None:
     assert {"split_id", "cagr", "maximum_drawdown", "q_table_states"}.issubset(
         report.columns,
     )
+
+
+def test_feature_mode_comparison_runs_both_modes() -> None:
+    dataset = _make_walk_forward_dataset()
+    splits = generate_walk_forward_splits(
+        dates=dataset.index,
+        train_months=24,
+        validation_months=6,
+        test_months=18,
+        step_months=6,
+    )
+
+    report, paths = run_feature_mode_walk_forward_comparison(
+        dataset=dataset,
+        splits=splits,
+        feature_modes=["raw", "normalized_binned"],
+        training_config=QLearningTrainingConfig(episodes=1, seed=7),
+    )
+
+    assert set(report["feature_mode"]) == {"raw", "normalized_binned"}
+    assert not paths.empty
+    assert any(column.startswith("raw_") for column in paths.columns)
+    assert any(column.startswith("normalized_binned_") for column in paths.columns)
 
 
 def _make_walk_forward_dataset() -> pd.DataFrame:

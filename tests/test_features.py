@@ -5,6 +5,7 @@ import pytest
 
 from features.market_features import build_market_features
 from features.state_builder import PortfolioContext, StateBuilder
+from features.transforms import build_expanding_zscores
 
 
 @pytest.fixture
@@ -53,6 +54,48 @@ def test_state_builder_appends_portfolio_weights(
 
     assert len(state) == 34
     assert state[-4:] == pytest.approx([0.1, 0.2, 0.3, 0.4])
+
+
+def test_state_builder_can_build_normalized_binned_state(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    state_builder = StateBuilder(feature_dataset, feature_mode="normalized_binned")
+    first_valid_index = state_builder.first_valid_index()
+    state = state_builder.build_state(
+        row_index=first_valid_index,
+        portfolio_context=PortfolioContext(weights=[0.25, 0.25, 0.25, 0.25]),
+    )
+    market_values = state[:-4]
+
+    assert "usd_ars_change_zbin" in state_builder.market_features.columns
+    assert "usd_ars_zbin" not in state_builder.market_features.columns
+    assert len(state) == 34
+    assert all(
+        value in {-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0} for value in market_values
+    )
+
+
+def test_market_features_can_use_usd_ars_change(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    features = build_market_features(
+        dataset=feature_dataset,
+        asset_prefixes=["arg", "ced", "sp500", "gold"],
+        macro_columns=["usd_ars", "vix"],
+        macro_mode="change",
+    )
+
+    assert "usd_ars_change" in features.columns
+    assert "usd_ars" not in features.columns
+    assert features.loc["2020-02-29", "usd_ars_change"] == pytest.approx(0.01)
+
+
+def test_expanding_zscores_do_not_use_future_observations() -> None:
+    features = pd.DataFrame({"feature": [1.0, 2.0, 3.0, 100.0]})
+
+    z_scores = build_expanding_zscores(features)
+
+    assert z_scores.loc[2, "feature"] == pytest.approx((3.0 - 2.0) / 0.8164965809)
 
 
 def test_state_builder_rejects_rows_with_incomplete_history(

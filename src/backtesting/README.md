@@ -12,6 +12,8 @@ Implemented pieces:
 - `engine.py`: fixed-weight and rule-based backtest engines
 - `splitter.py`: rolling train/validation/test walk-forward split generation
 - `walk_forward.py`: walk-forward Q-learning evaluation
+- `feature_modes.py`: side-by-side walk-forward comparison of state feature
+  representations
 
 Backtest outputs include monthly returns, net rewards where transaction costs
 apply, turnover, rebalancing costs, portfolio value, and drawdown.
@@ -25,6 +27,11 @@ The `scripts/run_walk_forward.py` command generates:
 
 - `data/processed/walk_forward/walk_forward_report.csv`
 - `data/processed/walk_forward/walk_forward_paths.csv`
+
+The `scripts/compare_feature_modes.py` command generates:
+
+- `data/processed/feature_modes/feature_mode_report.csv`
+- `data/processed/feature_modes/feature_mode_paths.csv`
 
 Walk-forward reports are also used by the hyperparameter optimizer to compare
 Q-learning configurations reproducibly.

@@ -1,0 +1,23 @@
+{
+  "dataset_path": "data/processed/dataset/monthly_dataset.parquet",
+  "dataset_start": "2017-12-31",
+  "dataset_end": "2026-06-30",
+  "feature_mode": "normalized_binned",
+  "current_weights_assumption": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+  ],
+  "training_config": {
+    "episodes": 25,
+    "learning_rate": 0.05,
+    "discount_factor": 0.95,
+    "epsilon": 0.2,
+    "min_epsilon": 0.02,
+    "epsilon_decay": 0.95,
+    "state_precision": 2,
+    "seed": 42
+  },
+  "interpretation_note": "This is a decision-support signal for the next monthly period, not an automatic trading instruction."
+}

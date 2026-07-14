@@ -4,14 +4,20 @@ import pandas as pd
 
 MOMENTUM_WINDOWS = (1, 3, 6, 12)
 VOLATILITY_WINDOWS = (3, 6, 12)
+MACRO_MODE_LEVEL = "level"
+MACRO_MODE_CHANGE = "change"
 
 
 def build_market_features(
     dataset: pd.DataFrame,
     asset_prefixes: list[str],
     macro_columns: list[str],
+    macro_mode: str = MACRO_MODE_LEVEL,
 ) -> pd.DataFrame:
     """Build momentum, volatility, and macro features available at time t."""
+    if macro_mode not in {MACRO_MODE_LEVEL, MACRO_MODE_CHANGE}:
+        raise ValueError(f"unsupported macro_mode: {macro_mode}")
+
     feature_frames: list[pd.Series] = []
     for prefix in asset_prefixes:
         price_column = f"price_{prefix}"
@@ -37,7 +43,11 @@ def build_market_features(
             )
 
     _validate_columns(dataset, macro_columns)
-    feature_frames.extend(dataset[column].rename(column) for column in macro_columns)
+    for column in macro_columns:
+        if column == "usd_ars" and macro_mode == MACRO_MODE_CHANGE:
+            feature_frames.append(dataset[column].pct_change().rename("usd_ars_change"))
+        else:
+            feature_frames.append(dataset[column].rename(column))
     return pd.concat(feature_frames, axis=1)
 
 

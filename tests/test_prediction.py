@@ -21,7 +21,7 @@ def test_predict_next_allocation_returns_valid_weights() -> None:
         prediction.w_sp500,
         prediction.w_gold,
     ]
-    assert prediction.target_period == "2021-04"
+    assert prediction.target_period == "2021-09"
     assert 0 <= prediction.action_id < agent.n_actions
     assert sum(weights) == 1.0
     assert prediction.state_source in {
@@ -48,15 +48,28 @@ def test_predict_next_allocations_returns_myopic_and_infinite_horizon() -> None:
     }
 
 
+def test_predict_next_allocations_accepts_normalized_binned_features() -> None:
+    dataset = _make_prediction_dataset()
+
+    predictions, _, _ = predict_next_allocations(
+        dataset=dataset,
+        training_config=QLearningTrainingConfig(episodes=1, seed=9),
+        current_weights=[0.25, 0.25, 0.25, 0.25],
+        feature_mode="normalized_binned",
+    )
+
+    assert len(predictions) == 2
+
+
 def _make_prediction_dataset() -> pd.DataFrame:
     """Create deterministic monthly data for prediction tests."""
-    index = pd.date_range("2020-01-31", periods=15, freq="ME")
+    index = pd.date_range("2020-01-31", periods=20, freq="ME")
     data: dict[str, list[float]] = {
-        "usd_ars": [100.0 + month for month in range(15)],
-        "vix": [20.0 + month for month in range(15)],
+        "usd_ars": [100.0 + month for month in range(20)],
+        "vix": [20.0 + month for month in range(20)],
     }
     for prefix in ["arg", "ced", "sp500", "gold"]:
-        prices = [100.0 + 3.0 * month for month in range(15)]
+        prices = [100.0 + 3.0 * month for month in range(20)]
         returns = [0.0]
         returns.extend(
             prices[index] / prices[index - 1] - 1.0 for index in range(1, len(prices))

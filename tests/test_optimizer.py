@@ -28,6 +28,7 @@ def test_q_learning_grid_search_returns_ranked_results() -> None:
     )
 
     assert len(results) == 2
+    assert set(results["feature_mode"]) == {"raw"}
     assert results.iloc[0]["score"] >= results.iloc[1]["score"]
     assert best_config.learning_rate in {0.05, 0.10}
 

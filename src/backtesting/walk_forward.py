@@ -8,12 +8,14 @@ from backtesting.splitter import WalkForwardSplit
 from env.portfolio_env import PortfolioEnv
 from evaluation.report import build_performance_report
 from features.state_builder import StateBuilder
+from features.transforms import FeatureMode
 
 
 def run_walk_forward_q_learning(
     dataset: pd.DataFrame,
     splits: list[WalkForwardSplit],
     training_config: QLearningTrainingConfig | None = None,
+    feature_mode: FeatureMode = "raw",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Train and evaluate Q-learning across walk-forward splits."""
     rows: list[dict] = []
@@ -25,7 +27,7 @@ def run_walk_forward_q_learning(
 
         train_env = PortfolioEnv(
             dataset=train_dataset,
-            state_builder=StateBuilder(train_dataset),
+            state_builder=StateBuilder(train_dataset, feature_mode=feature_mode),
         )
         training_result = train_q_learning_agent(
             env=train_env,
@@ -34,13 +36,14 @@ def run_walk_forward_q_learning(
 
         test_env = PortfolioEnv(
             dataset=test_dataset,
-            state_builder=StateBuilder(test_dataset),
+            state_builder=StateBuilder(test_dataset, feature_mode=feature_mode),
         )
         test_result = run_agent_backtest(test_env, training_result.agent)
         report = build_performance_report({"q_learning": test_result})
         metrics = report.loc["q_learning"].to_dict()
         rows.append(
             {
+                "feature_mode": feature_mode,
                 "split_id": split.split_id,
                 "train_start": split.train_start,
                 "train_end": split.train_end,
