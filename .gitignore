@@ -6,3 +6,9 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+
+.DS_Store
+**/.DS_Store
+
+analysis/episodes/*.csv
+analysis/episodes/*_metadata.json
