@@ -23,10 +23,12 @@ def main() -> None:
         dataset=dataset,
         splits=splits,
         episodes=[15, 25],
-        learning_rates=[0.05, 0.10],
-        epsilons=[0.20, 0.30],
-        epsilon_decays=[0.90, 0.95],
+        learning_rates=[0.05, 0.10, 0.30],
+        learning_rate_schedules=["constant", "visit_decay"],
+        epsilons=[0.50],
+        epsilon_decays=[0.999954],
         state_precisions=[2],
+        feature_modes=["compact_regime"],
         seed=42,
     )
 
@@ -44,11 +46,14 @@ def main() -> None:
         config={
             "objective": "maximize mean walk-forward score",
             "dataset": config["processed_dataset_path"],
+            "feature_mode": "compact_regime",
             "search_space": {
                 "episodes": [15, 25],
-                "learning_rates": [0.05, 0.10],
-                "epsilons": [0.20, 0.30],
-                "epsilon_decays": [0.90, 0.95],
+                "learning_rates": [0.05, 0.10, 0.30],
+                "learning_rate_schedules": ["constant", "visit_decay"],
+                "visit_learning_rate_decay": 0.01,
+                "epsilons": [0.50],
+                "epsilon_decays": [0.999954],
                 "state_precisions": [2],
             },
         },

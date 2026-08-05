@@ -43,7 +43,9 @@ The problem is modeled as a Markov Decision Process (MDP).
 
 The state represents the current market environment and the current portfolio situation.
 
-The Version 1 state definition is fixed and consists of the following variables.
+The detailed feature mode consists of the following variables. It is retained
+for comparison and is the planned input to a future DQN; the compact regime
+state defined below is the default for tabular Q-learning.
 
 ### Market Variables
 
@@ -60,8 +62,6 @@ the following features are included:
 
 - 1-month momentum
 - 3-month momentum
-- 6-month momentum
-- 12-month momentum
 
 Momentum is defined as cumulative simple return over the corresponding lookback window.
 
@@ -72,9 +72,6 @@ mom_1m = P_t / P_t-1 - 1
 
 mom_3m = P_t / P_t-3 - 1
 
-mom_6m = P_t / P_t-6 - 1
-
-mom_12m = P_t / P_t-12 - 1
 ```
 
 
@@ -87,8 +84,8 @@ mom_12m = P_t / P_t-12 - 1
 This produces:
 
 ```text
-4 assets × (4 momentum features + 3 volatility features)
-= 28 features
+4 assets × (2 momentum features + 3 volatility features)
+= 20 features
 ```
 
 Volatility is defined as the rolling standard deviation of monthly returns.
@@ -107,14 +104,13 @@ vol_12m = rolling std over last 12 monthly returns
 
 The following macroeconomic variables are included:
 
-- USD/ARS exchange rate
-- Monthly inflation rate
+- Monthly USD/ARS change
 - VIX level
 
-This produces:
+The current implementation produces:
 
 ```text
-3 features
+2 features
 ```
 
 ### Portfolio Variables
@@ -137,11 +133,11 @@ This produces:
 The complete state vector contains:
 
 ```text
-28 market features
-+ 3 macro features
+20 market features
++ 2 macro features
 + 4 portfolio features
 
-= 35 total features
+= 26 total features
 ```
 
 ### State Vector
@@ -153,42 +149,29 @@ State_t = [
 
     ARG_mom_1m,
     ARG_mom_3m,
-    ARG_mom_6m,
-    ARG_mom_12m,
-
     ARG_vol_3m,
     ARG_vol_6m,
     ARG_vol_12m,
 
     CED_mom_1m,
     CED_mom_3m,
-    CED_mom_6m,
-    CED_mom_12m,
-
     CED_vol_3m,
     CED_vol_6m,
     CED_vol_12m,
 
     SPY_mom_1m,
     SPY_mom_3m,
-    SPY_mom_6m,
-    SPY_mom_12m,
-
     SPY_vol_3m,
     SPY_vol_6m,
     SPY_vol_12m,
 
     GLD_mom_1m,
     GLD_mom_3m,
-    GLD_mom_6m,
-    GLD_mom_12m,
-
     GLD_vol_3m,
     GLD_vol_6m,
     GLD_vol_12m,
 
-    usd_ars,
-    inflation,
+    usd_ars_change,
     vix,
 
     w_arg,
@@ -206,6 +189,35 @@ Every feature in the state must be computed exclusively using information availa
 No future observations may be used when constructing the state.
 
 This requirement is mandatory and must be enforced throughout the project.
+
+### State Discretization
+
+The default tabular representation is the compact regime state below. It uses
+expanding terciles through time `t` only, then aggregates the detailed inputs:
+
+```text
+momentum_leader:   0=ARG, 1=CEDEARs, 2=S&P500, 3=Gold
+momentum_strength: 0=low, 1=medium, 2=high
+usd_ars_regime:    0=low, 1=medium, 2=high
+vix_regime:        0=low, 1=medium, 2=high
+w_arg, w_ced, w_sp500, w_gold
+```
+
+For each asset, its 1M and 3M momentum labels are averaged. The highest score
+is the leader; ties follow the fixed asset order. The leading score is low when
+`<= 2/3`, medium when `<= 4/3`, and high otherwise. USD/ARS uses monthly
+percentage change before its expanding-tercile regime is calculated. Portfolio
+weights are not binned: they retain their 10% action-space grid.
+
+This representation has at most `4 × 3 × 3 × 3 × 286 = 30,888` states. The
+previous detailed 22-feature `tercile_binned` state remains available for
+comparison and is reserved as the intended input representation for the next
+DQN experiment.
+
+For walk-forward validation, the historical observations in the training window
+seed the thresholds. For test, training plus validation observations seed them.
+As each validation or test month is evaluated, its own observed features are
+then included for the state at that month; later months are never included.
 ---
 
 ## Action Space
@@ -280,7 +292,8 @@ The project does not attempt to explicitly estimate a transition matrix.
 
 # Reward Function
 
-The reward function aims to maximize portfolio growth net of transaction costs.
+The reward function maximizes CRRA utility of portfolio growth net of
+transaction costs. The fixed relative risk-aversion coefficient is `γ = 0.5`.
 
 ## Portfolio Return
 
@@ -332,20 +345,31 @@ rebalance_cost_t =
 
 ---
 
-## Reward
+## Net Return And Reward
 
-The training reward is defined as:
+First calculate the net portfolio return:
 
 ```text
-reward_t =
-R_portfolio,t - rebalance_cost_t
+R_net,t = R_portfolio,t - rebalance_cost_t
 ```
 
-### Important
+The training reward is CRRA utility applied to this net return:
 
-Volatility is intentionally excluded from the reward function.
+```text
+reward_t = ((1 + R_net,t)^(1 - γ) - 1) / (1 - γ)
+```
 
-Risk management will be handled through evaluation metrics during backtesting rather than during training.
+With the selected `γ = 0.5`, this becomes:
+
+```text
+reward_t = 2 * (sqrt(1 + R_net,t) - 1)
+```
+
+`1 + R_net,t` must be positive. Portfolio value and evaluation metrics remain
+based on `R_net,t`, rather than on utility. CRRA makes the agent moderately
+risk-averse; equivalent gains and losses in percentage terms do not receive
+equal utility. Volatility is not added as a separate penalty because the
+concave utility already accounts for risk preferences.
 
 ---
 
@@ -367,6 +391,33 @@ Continuous-action algorithms such as:
 - TD3
 
 are considered out of scope for the initial implementation.
+
+---
+
+# Synthetic Training Model
+
+Q-learning supports an optional synthetic training mode. For every walk-forward
+split, its generator must be fitted exclusively on that split's training data.
+Validation and test data must remain real and must never update the simulator or
+Q-table.
+
+Training VIX terciles define `LOW_VOL`, `MEDIUM_VOL`, and `HIGH_VOL`. A smoothed
+Markov chain generates monthly regimes. Conditional on each regime, a separate
+regularized multivariate Student-t distribution generates:
+
+```text
+log(1 + r_arg)
+log(1 + r_ced)
+log(1 + r_sp500)
+log(1 + r_gold)
+change(log(USD/ARS))
+change(log(VIX))
+```
+
+Degrees of freedom are fixed and configurable, with `nu=8` as the initial
+default. Prices and macro levels must be reconstructed as positive values, and
+the standard feature pipeline must build all derived states. Episode generation
+must be reproducible and lazy.
 
 ---
 

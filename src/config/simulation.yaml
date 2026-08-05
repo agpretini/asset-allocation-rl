@@ -1,0 +1,12 @@
+vix_quantiles:
+  - 0.3333333333333333
+  - 0.6666666666666666
+transition_smoothing: 1.0
+degrees_freedom: 8.0
+covariance_regularization: 0.000001
+episode_count: 1000
+episode_length: 120
+seed: 42
+min_vix: 8.0
+max_vix: 100.0
+max_abs_log_change: 1.0

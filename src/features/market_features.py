@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-MOMENTUM_WINDOWS = (1, 3, 6, 12)
+MOMENTUM_WINDOWS = (1, 3)
 VOLATILITY_WINDOWS = (3, 6, 12)
 MACRO_MODE_LEVEL = "level"
 MACRO_MODE_CHANGE = "change"

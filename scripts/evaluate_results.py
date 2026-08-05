@@ -28,7 +28,7 @@ def main() -> None:
         config={
             "agent_type": "q_learning",
             "dataset": config["processed_dataset_path"],
-            "reward": "portfolio_return - 0.014 * turnover",
+            "reward": "CRRA(gamma=0.5) utility of portfolio_return - 0.014 * turnover",
             "feature_set": "market_momentum_volatility_macro_plus_weights",
         },
         metrics=metrics.loc["q_learning"].to_dict(),

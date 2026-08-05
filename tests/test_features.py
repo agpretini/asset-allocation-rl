@@ -5,12 +5,16 @@ import pytest
 
 from features.market_features import build_market_features
 from features.state_builder import PortfolioContext, StateBuilder
-from features.transforms import build_expanding_zscores
+from features.transforms import (
+    COMPACT_REGIME_FEATURE_MODE,
+    build_expanding_tercile_features,
+    build_expanding_zscores,
+)
 
 
 @pytest.fixture
 def feature_dataset() -> pd.DataFrame:
-    """Create a deterministic dataset with enough history for 12M features."""
+    """Create a deterministic dataset with enough history for 3M features."""
     index = pd.date_range("2020-01-31", periods=15, freq="ME")
     data: dict[str, list[float]] = {
         "usd_ars": [100.0 + month for month in range(15)],
@@ -36,7 +40,9 @@ def test_market_features_use_past_and_current_values_only(
         macro_columns=["usd_ars", "vix"],
     )
 
-    assert features.loc["2021-01-31", "arg_mom_12m"] == pytest.approx(1.2)
+    assert features.loc["2021-01-31", "arg_mom_3m"] == pytest.approx(
+        220.0 / 190.0 - 1.0,
+    )
     assert features.loc["2021-01-31", "arg_vol_3m"] == pytest.approx(
         feature_dataset["r_arg"].iloc[10:13].std(),
     )
@@ -52,7 +58,7 @@ def test_state_builder_appends_portfolio_weights(
         portfolio_context=PortfolioContext(weights=[0.1, 0.2, 0.3, 0.4]),
     )
 
-    assert len(state) == 34
+    assert len(state) == 8
     assert state[-4:] == pytest.approx([0.1, 0.2, 0.3, 0.4])
 
 
@@ -69,9 +75,55 @@ def test_state_builder_can_build_normalized_binned_state(
 
     assert "usd_ars_change_zbin" in state_builder.market_features.columns
     assert "usd_ars_zbin" not in state_builder.market_features.columns
-    assert len(state) == 34
+    assert len(state) == 26
     assert all(
         value in {-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0} for value in market_values
+    )
+
+
+def test_state_builder_defaults_to_compact_regime_state(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    state_builder = StateBuilder(feature_dataset)
+    first_valid_index = state_builder.first_valid_index()
+    state = state_builder.build_state(
+        row_index=first_valid_index,
+        portfolio_context=PortfolioContext(weights=[0.25, 0.25, 0.25, 0.25]),
+    )
+
+    assert state_builder.feature_mode == COMPACT_REGIME_FEATURE_MODE
+    assert list(state_builder.market_features.columns) == [
+        "momentum_leader",
+        "momentum_strength",
+        "usd_ars_regime",
+        "vix_regime",
+    ]
+    assert len(state) == 8
+    assert state[0] in {0.0, 1.0, 2.0, 3.0}
+    assert all(value in {0.0, 1.0, 2.0} for value in state[1:-4])
+
+
+def test_state_builder_keeps_detailed_tercile_mode_available(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    state_builder = StateBuilder(feature_dataset, feature_mode="tercile_binned")
+
+    assert "usd_ars_change_tercile" in state_builder.market_features.columns
+    assert len(state_builder.market_features.columns) == 22
+
+
+def test_compact_regime_does_not_use_future_observations(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    altered_future = feature_dataset.copy()
+    altered_future.loc["2021-02-28":, "price_arg"] *= 100.0
+    altered_future.loc["2021-02-28":, "vix"] *= 10.0
+
+    original = StateBuilder(feature_dataset)
+    altered = StateBuilder(altered_future)
+
+    assert original.market_features.loc[:"2021-01-31"].equals(
+        altered.market_features.loc[:"2021-01-31"],
     )
 
 
@@ -96,6 +148,36 @@ def test_expanding_zscores_do_not_use_future_observations() -> None:
     z_scores = build_expanding_zscores(features)
 
     assert z_scores.loc[2, "feature"] == pytest.approx((3.0 - 2.0) / 0.8164965809)
+
+
+def test_expanding_terciles_do_not_use_future_observations() -> None:
+    features = pd.DataFrame({"feature": [3.0, 1.0, 2.0, 100.0]})
+
+    terciles = build_expanding_tercile_features(features)
+
+    assert list(terciles.loc[:2, "feature_tercile"]) == [0.0, 0.0, 1.0]
+
+
+def test_state_builder_uses_prior_history_for_out_of_sample_rows(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    history = feature_dataset.iloc[:13]
+    target = feature_dataset.iloc[13:]
+
+    state_builder = StateBuilder(target, history_dataset=history)
+
+    assert state_builder.first_valid_index() == 0
+    assert state_builder.market_features.index.equals(target.index)
+
+
+def test_state_builder_rejects_overlapping_history(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    with pytest.raises(ValueError, match="must end before"):
+        StateBuilder(
+            feature_dataset.iloc[12:],
+            history_dataset=feature_dataset.iloc[:13],
+        )
 
 
 def test_state_builder_rejects_rows_with_incomplete_history(

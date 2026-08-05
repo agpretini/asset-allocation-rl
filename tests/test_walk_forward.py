@@ -6,6 +6,7 @@ from agents.training import QLearningTrainingConfig
 from backtesting.feature_modes import run_feature_mode_walk_forward_comparison
 from backtesting.splitter import generate_walk_forward_splits
 from backtesting.walk_forward import run_walk_forward_q_learning
+from simulation.market_simulator import SimulationConfig
 
 
 def test_generate_walk_forward_splits_rolls_forward() -> None:
@@ -69,6 +70,38 @@ def test_feature_mode_comparison_runs_both_modes() -> None:
     assert not paths.empty
     assert any(column.startswith("raw_") for column in paths.columns)
     assert any(column.startswith("normalized_binned_") for column in paths.columns)
+
+
+def test_synthetic_training_keeps_walk_forward_test_historical() -> None:
+    dataset = _make_walk_forward_dataset()
+    splits = generate_walk_forward_splits(
+        dates=dataset.index,
+        train_months=24,
+        validation_months=6,
+        test_months=18,
+        step_months=18,
+    )
+    simulation_config = SimulationConfig(
+        episode_count=2,
+        episode_length=18,
+        seed=13,
+    )
+
+    report, paths = run_walk_forward_q_learning(
+        dataset=dataset,
+        splits=splits,
+        training_config=QLearningTrainingConfig(
+            episodes=2,
+            training_mode="synthetic",
+            seed=13,
+        ),
+        simulation_config=simulation_config,
+    )
+
+    assert set(report["training_mode"]) == {"synthetic"}
+    assert paths.index.isin(dataset.index).all()
+    assert paths.index.min() >= splits[0].test_start
+    assert paths.index.max() <= splits[0].test_end
 
 
 def _make_walk_forward_dataset() -> pd.DataFrame:

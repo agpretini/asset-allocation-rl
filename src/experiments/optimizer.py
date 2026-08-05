@@ -5,10 +5,15 @@ from itertools import product
 
 import pandas as pd
 
+from agents.q_learning import (
+    CONSTANT_LEARNING_RATE,
+    VISIT_DECAY_LEARNING_RATE,
+    LearningRateSchedule,
+)
 from agents.training import QLearningTrainingConfig
 from backtesting.splitter import WalkForwardSplit
 from backtesting.walk_forward import run_walk_forward_q_learning
-from features.transforms import FeatureMode
+from features.transforms import COMPACT_REGIME_FEATURE_MODE, FeatureMode
 
 
 @dataclass(frozen=True)
@@ -30,6 +35,7 @@ def run_q_learning_grid_search(
     splits: list[WalkForwardSplit],
     episodes: list[int] | None = None,
     learning_rates: list[float] | None = None,
+    learning_rate_schedules: list[LearningRateSchedule] | None = None,
     epsilons: list[float] | None = None,
     epsilon_decays: list[float] | None = None,
     state_precisions: list[int] | None = None,
@@ -37,12 +43,14 @@ def run_q_learning_grid_search(
     seed: int = 42,
 ) -> tuple[pd.DataFrame, QLearningTrainingConfig]:
     """Evaluate a small Q-learning hyperparameter grid."""
-    selected_feature_modes = feature_modes or ["raw"]
+    selected_feature_modes = feature_modes or [COMPACT_REGIME_FEATURE_MODE]
     trial_configs = _build_trial_configs(
         episodes=episodes or [15, 25],
         learning_rates=learning_rates or [0.05, 0.10],
-        epsilons=epsilons or [0.20, 0.30],
-        epsilon_decays=epsilon_decays or [0.90, 0.95],
+        learning_rate_schedules=learning_rate_schedules
+        or [CONSTANT_LEARNING_RATE, VISIT_DECAY_LEARNING_RATE],
+        epsilons=epsilons or [0.50],
+        epsilon_decays=epsilon_decays or [0.999954],
         state_precisions=state_precisions or [2],
         seed=seed,
     )
@@ -84,7 +92,10 @@ def run_q_learning_grid_search(
     best_row = results.iloc[0]
     best_config = QLearningTrainingConfig(
         episodes=int(best_row["episodes"]),
+        training_mode=str(best_row["training_mode"]),
         learning_rate=float(best_row["learning_rate"]),
+        learning_rate_schedule=str(best_row["learning_rate_schedule"]),
+        visit_learning_rate_decay=float(best_row["visit_learning_rate_decay"]),
         discount_factor=float(best_row["discount_factor"]),
         epsilon=float(best_row["epsilon"]),
         min_epsilon=float(best_row["min_epsilon"]),
@@ -98,6 +109,7 @@ def run_q_learning_grid_search(
 def _build_trial_configs(
     episodes: list[int],
     learning_rates: list[float],
+    learning_rate_schedules: list[LearningRateSchedule],
     epsilons: list[float],
     epsilon_decays: list[float],
     state_precisions: list[int],
@@ -108,6 +120,7 @@ def _build_trial_configs(
         QLearningTrainingConfig(
             episodes=episode_count,
             learning_rate=learning_rate,
+            learning_rate_schedule=learning_rate_schedule,
             epsilon=epsilon,
             epsilon_decay=epsilon_decay,
             state_precision=state_precision,
@@ -116,12 +129,14 @@ def _build_trial_configs(
         for (
             episode_count,
             learning_rate,
+            learning_rate_schedule,
             epsilon,
             epsilon_decay,
             state_precision,
         ) in product(
             episodes,
             learning_rates,
+            learning_rate_schedules,
             epsilons,
             epsilon_decays,
             state_precisions,

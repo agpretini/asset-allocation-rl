@@ -250,6 +250,61 @@ This prevents look-ahead bias.
 
 ---
 
+# Training Reward
+
+## Decision
+
+The agent is trained with constant-relative-risk-aversion (CRRA) utility with
+relative risk aversion `γ = 0.5`.
+
+For each monthly decision, the net portfolio return is calculated first:
+
+```text
+R_net,t = R_portfolio,t - 0.014 * turnover_t
+```
+
+The reward supplied to the RL agent is:
+
+```text
+reward_t = 2 * (sqrt(1 + R_net,t) - 1)
+```
+
+Portfolio accounting remains based on `R_net,t`; CRRA utility is only the
+learning signal. The net gross return must remain positive.
+
+## Rationale
+
+`γ = 0.5` introduces moderate aversion to risk while retaining meaningful
+preference for growth. It penalizes a loss slightly more than it rewards an
+equal percentage gain, unlike a raw-return reward.
+
+---
+
+# State Discretization
+
+## Decision
+
+All market-state variables are discretized using expanding historical terciles.
+Momentum, volatility, USD/ARS monthly change, and VIX are encoded as low (`0`),
+medium (`1`), or high (`2`). USD/ARS is represented by its percentage change
+from the previous month rather than its absolute level.
+
+For each feature and period, the lower and upper cutoffs are its 33.33% and
+66.67% quantiles over valid observations available up to and including that
+period. Portfolio allocation weights are kept as their original 10% grid.
+
+In walk-forward evaluation, the training window initializes validation
+thresholds. The combined training and validation history initializes test
+thresholds. This history is valid information at the start of each subsequent
+window and is expanded only with observations as they become available.
+
+## Rationale
+
+This substantially reduces the tabular state space while preserving relative
+market regimes. Expanding thresholds prevent any use of future information.
+
+---
+
 # Benchmark Definitions
 
 ## Benchmark 1
@@ -389,6 +444,52 @@ This provides a cleaner reference point for comparison against the RL agent.
 ### Implications
 
 Benchmark performance will be calculated directly from asset returns without applying rebalancing costs.
+
+---
+
+# Synthetic Training Data
+
+## Decision
+
+Synthetic observations may be used only for Q-learning training. Each simulator
+is fitted from the active training window and cannot inspect validation or test.
+Validation, test, portfolio reports, and model comparisons remain historical.
+
+The simulator models six primitive monthly variables: four asset log returns,
+USD/ARS log change, and VIX log change. It does not simulate momentum,
+volatility, tercile labels, portfolio weights, rewards, or final states.
+
+Training VIX terciles define three regimes. Regime transitions use a smoothed
+Markov matrix, and each regime has a separate regularized multivariate Student-t
+distribution with configurable fixed degrees of freedom (`nu=8` by default).
+Market levels are reconstructed before the normal feature pipeline runs.
+
+---
+
+# Compact Tabular State
+
+## Decision
+
+Tabular Q-learning uses `compact_regime` as its default state representation.
+The state aggregates detailed causal market inputs into momentum leader,
+momentum strength, USD/ARS regime, and VIX regime, then appends the current
+portfolio weights. This constrains the theoretical tabular state space to
+30,888 states including portfolio allocations.
+
+## Rationale
+
+The detailed `tercile_binned` state has 22 market features. Its combinatorial
+space made exact state revisits rare even with synthetic episodes, preventing
+tabular Q-learning from accumulating reliable state-action estimates. The
+compact representation preserves directional and risk-regime information while
+making repeated visits feasible.
+
+## Future Direction
+
+The detailed state is retained unchanged as the intended DQN input. A DQN can
+generalize across related states and is therefore the appropriate way to return
+to a richer state representation after the compact tabular baseline is
+evaluated.
 
 ---
 

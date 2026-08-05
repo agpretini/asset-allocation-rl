@@ -28,7 +28,13 @@ def build_performance_report(
     """Build a metrics report for net-return strategy backtest results."""
     rows: dict[str, dict[str, float]] = {}
     for key, result in results.items():
-        return_column = "reward" if "reward" in result.columns else "portfolio_return"
+        return_column = (
+            "net_portfolio_return"
+            if "net_portfolio_return" in result.columns
+            else "reward"
+            if "reward" in result.columns
+            else "portfolio_return"
+        )
         rows[key] = calculate_performance_metrics(
             monthly_returns=result[return_column],
             portfolio_values=result["portfolio_value"],

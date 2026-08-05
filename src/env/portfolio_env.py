@@ -6,7 +6,11 @@ from typing import Any
 import pandas as pd
 
 from env.action_space import generate_action_space
-from env.reward import calculate_reward
+from env.reward import (
+    DEFAULT_RISK_AVERSION,
+    calculate_net_portfolio_return,
+    calculate_reward,
+)
 from features.state_builder import PortfolioContext, StateBuilder
 
 
@@ -31,6 +35,7 @@ class PortfolioEnv:
         initial_weights: list[float] | None = None,
         initial_value: float = 1.0,
         transaction_cost: float = 0.014,
+        risk_aversion: float = DEFAULT_RISK_AVERSION,
     ) -> None:
         """Create an environment for one historical dataset."""
         self.dataset = dataset
@@ -39,6 +44,7 @@ class PortfolioEnv:
         self.initial_weights = initial_weights or [0.25, 0.25, 0.25, 0.25]
         self.initial_value = initial_value
         self.transaction_cost = transaction_cost
+        self.risk_aversion = risk_aversion
 
         self._validate()
         self.current_index = self.state_builder.first_valid_index()
@@ -68,13 +74,19 @@ class PortfolioEnv:
 
         portfolio_return = self._calculate_portfolio_return(next_row, target_weights)
         turnover = calculate_turnover(target_weights, previous_weights)
-        reward = calculate_reward(
+        net_portfolio_return = calculate_net_portfolio_return(
             portfolio_return=portfolio_return,
             turnover=turnover,
             transaction_cost=self.transaction_cost,
         )
+        reward = calculate_reward(
+            portfolio_return=portfolio_return,
+            turnover=turnover,
+            transaction_cost=self.transaction_cost,
+            risk_aversion=self.risk_aversion,
+        )
 
-        self.portfolio_value *= 1.0 + reward
+        self.portfolio_value *= 1.0 + net_portfolio_return
         self.peak_value = max(self.peak_value, self.portfolio_value)
         drawdown = self.portfolio_value / self.peak_value - 1.0
         self.current_index = next_index
@@ -86,6 +98,7 @@ class PortfolioEnv:
             "action_id": action_id,
             "weights": target_weights,
             "portfolio_return": portfolio_return,
+            "net_portfolio_return": net_portfolio_return,
             "turnover": turnover,
             "rebalance_cost": self.transaction_cost * turnover,
             "reward": reward,
@@ -126,6 +139,8 @@ class PortfolioEnv:
             raise ValueError("initial_value must be positive")
         if self.transaction_cost < 0.0:
             raise ValueError("transaction_cost must be non-negative")
+        if self.risk_aversion < 0.0:
+            raise ValueError("risk_aversion must be non-negative")
         if len(self.initial_weights) != 4:
             raise ValueError("initial_weights must contain four weights")
         if abs(sum(self.initial_weights) - 1.0) > 1e-12:

@@ -46,12 +46,13 @@ def test_run_benchmarks_returns_one_result_per_benchmark() -> None:
     assert results["sp500"]["portfolio_return"].iloc[0] == pytest.approx(0.01)
 
 
-def test_performance_report_prefers_net_reward_when_available() -> None:
+def test_performance_report_prefers_net_portfolio_return_when_available() -> None:
     result = pd.DataFrame(
         {
             "portfolio_return": [0.05],
             "reward": [0.04],
-            "portfolio_value": [1.04],
+            "net_portfolio_return": [0.03],
+            "portfolio_value": [1.03],
             "turnover": [0.1],
         },
         index=pd.date_range("2021-01-31", periods=1, freq="ME"),
@@ -59,4 +60,4 @@ def test_performance_report_prefers_net_reward_when_available() -> None:
 
     report = build_performance_report({"strategy": result})
 
-    assert report.loc["strategy", "cagr"] == pytest.approx(1.04**12 - 1.0)
+    assert report.loc["strategy", "cagr"] == pytest.approx(1.03**12 - 1.0)

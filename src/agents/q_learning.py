@@ -4,7 +4,11 @@ import json
 import random
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+LearningRateSchedule = Literal["constant", "visit_decay"]
+CONSTANT_LEARNING_RATE: LearningRateSchedule = "constant"
+VISIT_DECAY_LEARNING_RATE: LearningRateSchedule = "visit_decay"
 
 
 class QLearningAgent:
@@ -14,10 +18,12 @@ class QLearningAgent:
         self,
         n_actions: int,
         learning_rate: float = 0.10,
+        learning_rate_schedule: LearningRateSchedule = CONSTANT_LEARNING_RATE,
+        visit_learning_rate_decay: float = 0.01,
         discount_factor: float = 0.95,
-        epsilon: float = 0.20,
+        epsilon: float = 0.50,
         min_epsilon: float = 0.01,
-        epsilon_decay: float = 0.95,
+        epsilon_decay: float = 0.999954,
         state_precision: int = 2,
         seed: int | None = None,
     ) -> None:
@@ -30,11 +36,20 @@ class QLearningAgent:
             raise ValueError("min_epsilon must be between zero and one")
         if learning_rate <= 0.0:
             raise ValueError("learning_rate must be positive")
+        if learning_rate_schedule not in {
+            CONSTANT_LEARNING_RATE,
+            VISIT_DECAY_LEARNING_RATE,
+        }:
+            raise ValueError("unsupported learning_rate_schedule")
+        if visit_learning_rate_decay < 0.0:
+            raise ValueError("visit_learning_rate_decay must be non-negative")
         if discount_factor < 0.0:
             raise ValueError("discount_factor must be non-negative")
 
         self.n_actions = n_actions
         self.learning_rate = learning_rate
+        self.learning_rate_schedule = learning_rate_schedule
+        self.visit_learning_rate_decay = visit_learning_rate_decay
         self.discount_factor = discount_factor
         self.epsilon = epsilon
         self.min_epsilon = min_epsilon
@@ -42,6 +57,7 @@ class QLearningAgent:
         self.state_precision = state_precision
         self.training = True
         self.q_table: dict[str, list[float]] = {}
+        self.visit_counts: dict[tuple[str, int], int] = {}
         self._rng = random.Random(seed)
 
     def select_action(self, state: Sequence[float]) -> int:
@@ -69,7 +85,10 @@ class QLearningAgent:
 
         bootstrap_value = 0.0 if done else max(next_q_values)
         target = reward + self.discount_factor * bootstrap_value
-        q_values[action_id] += self.learning_rate * (target - q_values[action_id])
+        learning_rate = self._learning_rate_for(state_key, action_id)
+        q_values[action_id] += learning_rate * (target - q_values[action_id])
+        visit_key = (state_key, action_id)
+        self.visit_counts[visit_key] = self.visit_counts.get(visit_key, 0) + 1
 
     def decay_epsilon(self) -> None:
         """Decay exploration after an episode."""
@@ -87,6 +106,12 @@ class QLearningAgent:
         """Return Q-values for a state, initializing unseen states."""
         return self._get_q_values(self._state_key(state))
 
+    def learning_rate_for(self, state: Sequence[float], action_id: int) -> float:
+        """Return the learning rate that the next update would use."""
+        if action_id < 0 or action_id >= self.n_actions:
+            raise ValueError("action_id is outside the action space")
+        return self._learning_rate_for(self._state_key(state), action_id)
+
     def save(self, path: str | Path) -> Path:
         """Save the Q-table and hyperparameters as JSON."""
         destination = Path(path)
@@ -94,12 +119,18 @@ class QLearningAgent:
         payload = {
             "n_actions": self.n_actions,
             "learning_rate": self.learning_rate,
+            "learning_rate_schedule": self.learning_rate_schedule,
+            "visit_learning_rate_decay": self.visit_learning_rate_decay,
             "discount_factor": self.discount_factor,
             "epsilon": self.epsilon,
             "min_epsilon": self.min_epsilon,
             "epsilon_decay": self.epsilon_decay,
             "state_precision": self.state_precision,
             "q_table": self.q_table,
+            "visit_counts": [
+                {"state_key": state_key, "action_id": action_id, "count": count}
+                for (state_key, action_id), count in self.visit_counts.items()
+            ],
         }
         destination.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         return destination
@@ -111,6 +142,13 @@ class QLearningAgent:
         agent = cls(
             n_actions=int(payload["n_actions"]),
             learning_rate=float(payload["learning_rate"]),
+            learning_rate_schedule=payload.get(
+                "learning_rate_schedule",
+                CONSTANT_LEARNING_RATE,
+            ),
+            visit_learning_rate_decay=float(
+                payload.get("visit_learning_rate_decay", 0.01),
+            ),
             discount_factor=float(payload["discount_factor"]),
             epsilon=float(payload["epsilon"]),
             min_epsilon=float(payload["min_epsilon"]),
@@ -120,6 +158,10 @@ class QLearningAgent:
         agent.q_table = {
             key: [float(value) for value in values]
             for key, values in payload["q_table"].items()
+        }
+        agent.visit_counts = {
+            (str(item["state_key"]), int(item["action_id"])): int(item["count"])
+            for item in payload.get("visit_counts", [])
         }
         return agent
 
@@ -143,3 +185,10 @@ class QLearningAgent:
         if state_key not in self.q_table:
             self.q_table[state_key] = [0.0] * self.n_actions
         return self.q_table[state_key]
+
+    def _learning_rate_for(self, state_key: str, action_id: int) -> float:
+        """Return the rate for the next update of one state-action pair."""
+        if self.learning_rate_schedule == CONSTANT_LEARNING_RATE:
+            return self.learning_rate
+        visits = self.visit_counts.get((state_key, action_id), 0)
+        return self.learning_rate / (1.0 + self.visit_learning_rate_decay * visits)

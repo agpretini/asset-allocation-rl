@@ -50,6 +50,7 @@ def run_feature_mode_decision_comparison(
         for split in splits:
             train_dataset = dataset.loc[split.train_start : split.train_end]
             test_dataset = dataset.loc[split.test_start : split.test_end]
+            test_history = dataset.loc[: split.validation_end]
 
             train_env = PortfolioEnv(
                 dataset=train_dataset,
@@ -62,7 +63,11 @@ def run_feature_mode_decision_comparison(
 
             test_env = PortfolioEnv(
                 dataset=test_dataset,
-                state_builder=StateBuilder(test_dataset, feature_mode=feature_mode),
+                state_builder=StateBuilder(
+                    test_dataset,
+                    feature_mode=feature_mode,
+                    history_dataset=test_history,
+                ),
             )
             path = run_agent_backtest(test_env, training_result.agent).reset_index()
             weights = pd.DataFrame(

@@ -9,7 +9,7 @@ from agents.q_learning import QLearningAgent
 from agents.training import QLearningTrainingConfig, train_q_learning_agent
 from env.portfolio_env import PortfolioEnv, calculate_turnover
 from features.state_builder import PortfolioContext, StateBuilder
-from features.transforms import FeatureMode
+from features.transforms import COMPACT_REGIME_FEATURE_MODE, FeatureMode
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ def predict_next_allocation(
     dataset: pd.DataFrame,
     training_config: QLearningTrainingConfig,
     current_weights: list[float] | None = None,
-    feature_mode: FeatureMode = "raw",
+    feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
 ) -> tuple[AllocationPrediction, QLearningAgent, pd.DataFrame]:
     """Train Q-learning and predict the infinite-horizon next allocation."""
     predictions, agent, history = predict_next_allocations(
@@ -61,7 +61,7 @@ def predict_next_allocations(
     dataset: pd.DataFrame,
     training_config: QLearningTrainingConfig,
     current_weights: list[float] | None = None,
-    feature_mode: FeatureMode = "raw",
+    feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
 ) -> tuple[list[AllocationPrediction], QLearningAgent, pd.DataFrame]:
     """Train on all data and produce myopic and infinite-horizon signals."""
     starting_weights = current_weights or [0.25, 0.25, 0.25, 0.25]

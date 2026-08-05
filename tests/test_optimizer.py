@@ -21,16 +21,18 @@ def test_q_learning_grid_search_returns_ranked_results() -> None:
         splits=splits,
         episodes=[1],
         learning_rates=[0.05, 0.10],
+        learning_rate_schedules=["constant", "visit_decay"],
         epsilons=[0.2],
         epsilon_decays=[0.9],
         state_precisions=[2],
         seed=5,
     )
 
-    assert len(results) == 2
-    assert set(results["feature_mode"]) == {"raw"}
+    assert len(results) == 4
+    assert set(results["feature_mode"]) == {"compact_regime"}
     assert results.iloc[0]["score"] >= results.iloc[1]["score"]
     assert best_config.learning_rate in {0.05, 0.10}
+    assert best_config.learning_rate_schedule in {"constant", "visit_decay"}
 
 
 def _make_optimizer_dataset() -> pd.DataFrame:

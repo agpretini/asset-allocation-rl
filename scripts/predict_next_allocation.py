@@ -27,7 +27,7 @@ def main() -> None:
     parser.add_argument(
         "--feature-mode",
         choices=FEATURE_MODES,
-        default="raw",
+        default="compact_regime",
         help="State feature representation to use for Q-learning.",
     )
     args = parser.parse_args()
@@ -86,7 +86,7 @@ def main() -> None:
 def _prediction_output_dir(target_period: str, feature_mode: str) -> Path:
     """Return the output directory for one prediction run."""
     base_dir = Path("data/processed/predictions") / target_period
-    if feature_mode == "raw":
+    if feature_mode == "compact_regime":
         return base_dir
     return base_dir / feature_mode
 
@@ -102,7 +102,10 @@ def _load_best_training_config() -> QLearningTrainingConfig:
     )
     return QLearningTrainingConfig(
         episodes=int(payload["episodes"]),
+        training_mode=payload.get("training_mode", "historical"),
         learning_rate=float(payload["learning_rate"]),
+        learning_rate_schedule=payload.get("learning_rate_schedule", "constant"),
+        visit_learning_rate_decay=float(payload.get("visit_learning_rate_decay", 0.01)),
         discount_factor=float(payload["discount_factor"]),
         epsilon=float(payload["epsilon"]),
         min_epsilon=float(payload["min_epsilon"]),

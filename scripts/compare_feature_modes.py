@@ -1,4 +1,4 @@
-"""Compare raw and normalized-binned states with walk-forward evaluation."""
+"""Compare raw, z-score, detailed, and compact states with walk-forward evaluation."""
 
 import sys
 from pathlib import Path
@@ -24,13 +24,23 @@ def main() -> None:
     report, paths = run_feature_mode_walk_forward_comparison(
         dataset=dataset,
         splits=splits,
-        feature_modes=["raw", "normalized_binned"],
+        feature_modes=[
+            "raw",
+            "normalized_binned",
+            "tercile_binned",
+            "compact_regime",
+        ],
         training_config=QLearningTrainingConfig(episodes=25, seed=42),
     )
     decisions = run_feature_mode_decision_comparison(
         dataset=dataset,
         splits=splits,
-        feature_modes=["raw", "normalized_binned"],
+        feature_modes=[
+            "raw",
+            "normalized_binned",
+            "tercile_binned",
+            "compact_regime",
+        ],
         training_config=QLearningTrainingConfig(episodes=25, seed=42),
     )
 

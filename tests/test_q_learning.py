@@ -26,6 +26,21 @@ def test_q_learning_update_changes_q_value() -> None:
     assert agent.q_table[key][1] == pytest.approx(0.05)
 
 
+def test_visit_decay_learning_rate_starts_at_point_three_and_decreases() -> None:
+    agent = QLearningAgent(
+        n_actions=1,
+        learning_rate=0.3,
+        learning_rate_schedule="visit_decay",
+        visit_learning_rate_decay=0.01,
+        epsilon=0.0,
+    )
+    state = [0.0]
+
+    assert agent.learning_rate_for(state, action_id=0) == pytest.approx(0.3)
+    agent.update(state, action_id=0, reward=1.0, next_state=state, done=True)
+    assert agent.learning_rate_for(state, action_id=0) == pytest.approx(0.3 / 1.01)
+
+
 def test_q_learning_model_round_trips(tmp_path) -> None:
     agent = QLearningAgent(n_actions=2, epsilon=0.0)
     agent.update([1.0], 0, 0.2, [2.0], done=True)
@@ -49,6 +64,27 @@ def test_train_q_learning_agent_populates_q_table() -> None:
     assert len(result.history) == 3
     assert len(result.agent.q_table) > 0
     assert result.agent.training is False
+
+
+def test_explicit_historical_mode_matches_existing_training() -> None:
+    dataset = _make_environment_dataset()
+    first_env = PortfolioEnv(dataset=dataset, state_builder=StateBuilder(dataset))
+    second_env = PortfolioEnv(dataset=dataset, state_builder=StateBuilder(dataset))
+    default_result = train_q_learning_agent(
+        env=first_env,
+        config=QLearningTrainingConfig(episodes=2, seed=11),
+    )
+    historical_result = train_q_learning_agent(
+        env=second_env,
+        config=QLearningTrainingConfig(
+            episodes=2,
+            training_mode="historical",
+            seed=11,
+        ),
+    )
+
+    assert historical_result.agent.q_table == default_result.agent.q_table
+    assert historical_result.agent.visit_counts == default_result.agent.visit_counts
 
 
 def _make_environment_dataset() -> pd.DataFrame:

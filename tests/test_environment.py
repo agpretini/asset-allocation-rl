@@ -22,10 +22,10 @@ def environment_dataset() -> pd.DataFrame:
     data["r_ced"] = [0.0] * 14
     data["r_sp500"] = [0.0] * 14
     data["r_gold"] = [0.0] * 14
-    data["r_arg"][13] = 0.10
-    data["r_ced"][13] = 0.02
-    data["r_sp500"][13] = -0.01
-    data["r_gold"][13] = 0.03
+    data["r_arg"][4] = 0.10
+    data["r_ced"][4] = 0.02
+    data["r_sp500"][4] = -0.01
+    data["r_gold"][4] = 0.03
 
     return pd.DataFrame(data, index=index)
 
@@ -62,9 +62,14 @@ def test_step_applies_next_period_returns_and_costs(
     assert info["portfolio_return"] == pytest.approx(0.10)
     assert info["turnover"] == pytest.approx(0.75)
     assert info["rebalance_cost"] == pytest.approx(0.014 * 0.75)
-    assert reward == pytest.approx(0.10 - 0.014 * 0.75)
-    assert info["portfolio_value"] == pytest.approx(1.0 + reward)
-    assert done is True
+    assert info["net_portfolio_return"] == pytest.approx(0.10 - 0.014 * 0.75)
+    assert reward == pytest.approx(
+        2.0 * ((1.0 + info["net_portfolio_return"]) ** 0.5 - 1.0)
+    )
+    assert info["portfolio_value"] == pytest.approx(
+        1.0 + info["net_portfolio_return"],
+    )
+    assert done is False
     assert next_state[-4:] == pytest.approx([1.0, 0.0, 0.0, 0.0])
 
 

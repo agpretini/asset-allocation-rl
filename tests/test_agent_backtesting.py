@@ -16,7 +16,7 @@ def test_random_agent_backtest_runs_to_completion() -> None:
 
     result = run_agent_backtest(env, agent)
 
-    assert len(result) == 2
+    assert len(result) == 11
     assert result.index.name == "date"
     assert {"action_id", "reward", "portfolio_value", "turnover"}.issubset(
         result.columns,

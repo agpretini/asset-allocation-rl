@@ -207,11 +207,11 @@ env.step(action_id)
 Implement:
 
 ```text
-reward =
-portfolio_return
--
-rebalancing_cost
+net_return = portfolio_return - rebalancing_cost
+reward = 2 * (sqrt(1 + net_return) - 1)
 ```
+
+This is CRRA utility with relative risk aversion `γ = 0.5`.
 
 ### Portfolio Accounting
 
@@ -242,8 +242,6 @@ Initial candidates:
 
 - 1M momentum
 - 3M momentum
-- 6M momentum
-- 12M momentum
 - Volatility
 - USD/ARS
 - Inflation
@@ -262,6 +260,13 @@ Implement:
 ```python
 state_builder.build_state(...)
 ```
+
+### Next Step: Detailed State with DQN
+
+Evaluate the compact-regime tabular baseline first. Then restore the detailed
+`tercile_binned` state representation and implement a DQN with replay and a
+target network, so the agent can generalize across detailed states rather than
+requiring exact state repetition.
 
 ## Success Criteria
 
@@ -467,6 +472,29 @@ Questions:
 ## Success Criteria
 
 Agent decisions become explainable.
+
+---
+
+# Milestone 13 - Synthetic Market Training
+
+## Goal
+
+Increase Q-learning state-action coverage without contaminating historical
+validation or test evaluation.
+
+## Deliverables
+
+- VIX-tercile market regimes.
+- Smoothed Markov regime transitions.
+- Regularized multivariate Student-t model per regime.
+- Reconstruction of canonical prices, returns, USD/ARS, and VIX.
+- Lazy reproducible episode generation.
+- Historical and synthetic training modes.
+
+## Success Criteria
+
+The simulator is fitted only on train, streams episodes through the existing
+environment, and leaves historical walk-forward test behavior intact.
 
 ---
 

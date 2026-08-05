@@ -27,6 +27,13 @@ Feature Layer
 ├── Portfolio Features
 ├── State Builder
 │
+Simulation Layer
+│
+├── VIX Regime Model
+├── Markov Chain
+├── Regime Student-t Models
+├── Lazy Episode Generator
+│
 Environment Layer
 │
 ├── Action Space Generator
@@ -181,6 +188,21 @@ The feature layer builds the state representation used by the RL agent.
 
 It should transform raw market and portfolio data into numerical features.
 
+The default tabular implementation is `compact_regime`: a causal momentum
+leader, momentum-strength, USD/ARS-change regime, and VIX regime, followed by
+the current portfolio weights. Momentum, USD/ARS, and VIX inputs use expanding
+historical terciles through the current row only; leader ties use the fixed
+asset order. This limits the state space to 30,888 combinations including the
+portfolio allocation.
+
+The detailed `tercile_binned` representation is retained as a non-default mode
+for comparison and for the planned DQN implementation.
+
+When building states for an out-of-sample window, `StateBuilder` accepts a
+strictly earlier history dataset. A validation window can use train history and
+walk-forward test evaluation uses train-plus-validation history, then slices
+the resulting features back to the target window.
+
 ## Suggested Modules
 
 ```text
@@ -194,8 +216,6 @@ src/features/
 
 - 1-month return.
 - 3-month momentum.
-- 6-month momentum.
-- 12-month momentum.
 - 3-month volatility.
 - 6-month volatility.
 - 12-month volatility.
@@ -288,6 +308,38 @@ The action space must satisfy:
 
 ---
 
+# Simulation Layer
+
+## Responsibilities
+
+The optional simulation layer is fitted only on an active training dataset. It
+classifies VIX into three fixed training-tercile regimes, estimates a smoothed
+monthly Markov chain, and fits one regularized multivariate Student-t model per
+regime.
+
+Only primitive monthly variables are sampled: four asset log returns, USD/ARS
+log change, and VIX log change. The simulator reconstructs the canonical ten
+dataset columns before `StateBuilder` derives any feature.
+
+## Modules
+
+```text
+src/simulation/
+├── regimes.py
+├── markov_chain.py
+├── multivariate_t.py
+└── market_simulator.py
+```
+
+`MarketSimulator.stream_episodes()` returns a lazy iterator. Each yielded data
+frame is converted to the existing `PortfolioEnv`; previous episodes need not
+remain in memory.
+
+In walk-forward mode the simulator receives `train_dataset` only. Test always
+uses real rows and a frozen Q-table.
+
+---
+
 # Environment Layer
 
 ## Responsibilities
@@ -367,15 +419,15 @@ rebalance_cost_t =
 Reward is:
 
 ```text
-reward_t =
-R_portfolio,t+1 - rebalance_cost_t
+R_net,t = R_portfolio,t+1 - rebalance_cost_t
+reward_t = 2 * (sqrt(1 + R_net,t) - 1)
 ```
 
 Portfolio value is updated as:
 
 ```text
 portfolio_value_t+1 =
-portfolio_value_t * (1 + reward_t)
+portfolio_value_t * (1 + R_net,t)
 ```
 
 ## Info Dictionary
@@ -388,6 +440,7 @@ The environment should return an `info` dictionary containing:
     "action_id": action_id,
     "weights": weights,
     "portfolio_return": portfolio_return,
+    "net_portfolio_return": net_portfolio_return,
     "turnover": turnover,
     "rebalance_cost": rebalance_cost,
     "reward": reward,
@@ -419,16 +472,19 @@ reward = calculate_reward(
     portfolio_return=portfolio_return,
     turnover=turnover,
     transaction_cost=0.014,
+    risk_aversion=0.5,
 )
 ```
 
 ## Required Formula
 
 ```text
-reward = portfolio_return - transaction_cost * turnover
+net_return = portfolio_return - transaction_cost * turnover
+reward = 2 * (sqrt(1 + net_return) - 1)
 ```
 
-Volatility must not be included in the reward.
+The reward is CRRA utility with `γ = 0.5`; portfolio accounting uses
+`net_return`, rather than utility. A separate volatility penalty is not used.
 
 ---
 
@@ -727,7 +783,7 @@ Tests should be created before or alongside core implementation.
 
 ### Reward Tests
 
-- Reward equals return minus rebalancing cost.
+- Reward equals CRRA utility of return net of rebalancing cost.
 - Zero turnover produces no rebalancing cost.
 - Full turnover produces expected cost.
 

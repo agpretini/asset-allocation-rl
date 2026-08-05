@@ -15,8 +15,19 @@ Implemented pieces:
 - `feature_modes.py`: side-by-side walk-forward comparison of state feature
   representations
 
-Backtest outputs include monthly returns, net rewards where transaction costs
-apply, turnover, rebalancing costs, portfolio value, and drawdown.
+Backtest outputs include gross monthly returns, net portfolio returns where
+transaction costs apply, CRRA rewards (`γ = 0.5`), turnover, rebalancing costs,
+portfolio value, and drawdown. Performance metrics use net portfolio returns,
+not utility rewards.
+
+Walk-forward test states retain train-plus-validation history for feature
+calculation. Expanding tercile thresholds therefore use all information known
+before the test window and update only as each test month becomes available.
+
+With `training_mode="synthetic"`, every split fits its simulator only on
+`train_dataset`. The test environment still uses real `test_dataset` rows and
+real train-plus-validation history, so reported metrics never use synthetic
+observations.
 
 The `scripts/run_backtest.py` command generates:
 

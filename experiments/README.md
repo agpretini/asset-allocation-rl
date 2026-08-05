@@ -12,6 +12,8 @@ Current prefixes:
 
 - `q_learning_###`: tracked Q-learning evaluation runs.
 - `hpo_###`: hyperparameter optimization runs.
+- `hpo_mode_comparison_###`: exhaustive historical-versus-synthetic HPO
+  comparisons.
 
 Examples:
 
@@ -20,7 +22,8 @@ experiments/
 ├── q_learning_001/
 ├── q_learning_002/
 ├── hpo_001/
-└── hpo_002/
+├── hpo_002/
+└── hpo_mode_comparison_001/
 ```
 
 ## Standard Contents
@@ -45,6 +48,22 @@ Run hyperparameter optimization:
 
 ```bash
 uv run python scripts/optimize_hyperparameters.py
+```
+
+Run the exhaustive comparison of the `hpo_004` grid, extended with 18k and 30k
+episodes plus the current `epsilon=0.50` and `epsilon_decay=0.999954` values,
+in both historical and synthetic modes:
+
+```bash
+uv run python scripts/run_full_mode_hpo_comparison.py
+```
+
+The runner updates `results.csv` after every trial. If it is interrupted,
+resume it with:
+
+```bash
+uv run python scripts/run_full_mode_hpo_comparison.py \
+  --resume-dir experiments/hpo_mode_comparison_001
 ```
 
 ## Relationship To `data/processed`

@@ -43,13 +43,26 @@ Train the first RL agent:
 uv run python scripts/train_agent.py
 ```
 
+Train from lazy synthetic episodes fitted on historical training data:
+
+```bash
+uv run python scripts/train_agent.py --training-mode synthetic
+```
+
 Run walk-forward evaluation:
 
 ```bash
 uv run python scripts/run_walk_forward.py
 ```
 
-Compare raw and normalized-binned state features with walk-forward evaluation:
+Run the same historical test evaluation after synthetic-only training:
+
+```bash
+uv run python scripts/run_walk_forward.py --training-mode synthetic
+```
+
+Compare raw, normalized, detailed-tercile, and compact-regime state features
+with walk-forward evaluation:
 
 ```bash
 uv run python scripts/compare_feature_modes.py
@@ -66,6 +79,9 @@ Run Q-learning hyperparameter optimization:
 ```bash
 uv run python scripts/optimize_hyperparameters.py
 ```
+
+The optimization compares fixed learning rates against a visit-decay schedule
+that starts at `0.30` and uses `0.30 / (1 + 0.01 * visits(state, action))`.
 
 Analyze portfolio behavior:
 
@@ -85,10 +101,10 @@ Train on all available data and predict the next monthly allocation:
 uv run python scripts/predict_next_allocation.py
 ```
 
-Generate the same prediction with normalized-binned features:
+Generate a prediction with expanding-tercile features (the default):
 
 ```bash
-uv run python scripts/predict_next_allocation.py --feature-mode normalized_binned
+uv run python scripts/predict_next_allocation.py --feature-mode tercile_binned
 ```
 
 The data layer downloads real Yahoo Finance close prices for the configured
@@ -143,8 +159,44 @@ Important reports:
 - `data/processed/walk_forward/walk_forward_report.csv`: robustness across
   rolling historical windows.
 - `data/processed/feature_modes/feature_mode_report.csv`: whether the
-  normalized-binned state representation improves walk-forward behavior versus
-  the original raw state.
+  compact-regime state representation improves walk-forward behavior versus
+  raw, normalized, and detailed-tercile alternatives.
+
+## State Discretization
+
+The default tabular state is the compact `compact_regime` representation:
+momentum leader (four assets), leader momentum strength (low/medium/high),
+USD/ARS-change regime (low/medium/high), VIX regime (low/medium/high), and the
+four current portfolio weights. Momentum inputs are first classified with
+expanding historical terciles through the current month only; ties for the
+leader use the fixed asset order. This produces at most 30,888 states including
+the 286 feasible portfolio allocations, making repeated state visits practical
+for tabular Q-learning.
+
+The prior detailed 22-market-feature `tercile_binned` representation remains
+available for comparison and is the planned input for a future DQN, where value
+function approximation can generalize across similar detailed states.
+
+When a validation window is evaluated, training history is its initial context;
+test states use training plus validation history. The tercile history then
+expands one month at a time within each out-of-sample window.
+
+## Synthetic Training
+
+Synthetic mode fits a three-regime simulator only on the active training
+window. Training VIX terciles determine the regimes, a smoothed Markov chain
+drives their transitions, and each regime uses a regularized multivariate
+Student-t model for four asset log returns, USD/ARS log change, and VIX log
+change.
+
+Each path reconstructs positive market levels and passes them through the same
+feature, state, environment, reward, and Q-learning code. Episodes are generated
+one at a time. Validation and test never contain synthetic observations and do
+not update the Q-table.
+
+The 70,000-episode convergence experiment with greedy validation checkpoints is
+documented in `analysis/episodes/README.md`.
+
 - `data/processed/analysis/portfolio_analysis.md`: allocation behavior,
   turnover, drawdowns, and regime behavior.
 - `data/processed/optimization/hyperparameter_results.csv`: whether better
@@ -207,6 +259,20 @@ you would still check:
 - whether the allocation is too concentrated for your risk tolerance;
 - whether the model is behaving reasonably in the current regime;
 - whether recent performance is consistent with walk-forward results.
+
+## Training Reward
+
+The agent is trained with CRRA utility using a relative risk-aversion
+coefficient of `0.5`, not with raw portfolio return. First, the monthly net
+return is calculated as `portfolio_return - 0.014 * turnover`. The reward is:
+
+```text
+reward = 2 * (sqrt(1 + net_return) - 1)
+```
+
+Portfolio accounting and evaluation metrics continue to use the net return,
+not the utility reward. Existing generated reports from before this change
+should be regenerated before comparing them with new runs.
 
 For real use, a conservative workflow is to rebalance only when the new target
 allocation differs meaningfully from the current allocation, and only if the

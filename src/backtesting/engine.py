@@ -5,7 +5,11 @@ from collections.abc import Callable
 import pandas as pd
 
 from env.portfolio_env import calculate_turnover
-from env.reward import calculate_reward
+from env.reward import (
+    DEFAULT_RISK_AVERSION,
+    calculate_net_portfolio_return,
+    calculate_reward,
+)
 
 Strategy = Callable[[pd.DataFrame], list[float]]
 
@@ -54,6 +58,7 @@ def run_weight_strategy_backtest(
     initial_weights: list[float] | None = None,
     initial_value: float = 1.0,
     transaction_cost: float = 0.014,
+    risk_aversion: float = DEFAULT_RISK_AVERSION,
     start_index: int = 12,
     return_columns: list[str] | None = None,
 ) -> pd.DataFrame:
@@ -65,6 +70,7 @@ def run_weight_strategy_backtest(
         initial_weights=initial_weights,
         initial_value=initial_value,
         transaction_cost=transaction_cost,
+        risk_aversion=risk_aversion,
         start_index=start_index,
     )
 
@@ -86,12 +92,18 @@ def run_weight_strategy_backtest(
             ),
         )
         turnover = calculate_turnover(weights, previous_weights)
-        reward = calculate_reward(
+        net_portfolio_return = calculate_net_portfolio_return(
             portfolio_return=portfolio_return,
             turnover=turnover,
             transaction_cost=transaction_cost,
         )
-        portfolio_value *= 1.0 + reward
+        reward = calculate_reward(
+            portfolio_return=portfolio_return,
+            turnover=turnover,
+            transaction_cost=transaction_cost,
+            risk_aversion=risk_aversion,
+        )
+        portfolio_value *= 1.0 + net_portfolio_return
         peak_value = max(peak_value, portfolio_value)
         drawdown = portfolio_value / peak_value - 1.0
 
@@ -100,6 +112,7 @@ def run_weight_strategy_backtest(
                 "date": dataset.index[current_index + 1],
                 "weights": weights,
                 "portfolio_return": portfolio_return,
+                "net_portfolio_return": net_portfolio_return,
                 "turnover": turnover,
                 "rebalance_cost": transaction_cost * turnover,
                 "reward": reward,
@@ -118,6 +131,7 @@ def _validate_strategy_inputs(
     initial_weights: list[float] | None,
     initial_value: float,
     transaction_cost: float,
+    risk_aversion: float,
     start_index: int,
 ) -> None:
     """Validate inputs for a rule-based strategy backtest."""
@@ -131,6 +145,8 @@ def _validate_strategy_inputs(
         raise ValueError("initial_value must be positive")
     if transaction_cost < 0.0:
         raise ValueError("transaction_cost must be non-negative")
+    if risk_aversion < 0.0:
+        raise ValueError("risk_aversion must be non-negative")
     if start_index < 0 or start_index >= len(dataset) - 1:
         raise ValueError("start_index must leave at least one next-period return")
     if initial_weights is not None:

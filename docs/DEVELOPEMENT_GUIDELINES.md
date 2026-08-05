@@ -230,9 +230,13 @@ def calculate_reward(
     portfolio_return: float,
     turnover: float,
     transaction_cost: float,
+    risk_aversion: float = 0.5,
 ) -> float:
     ...
 ```
+
+The default reward is CRRA utility with `risk_aversion=0.5`; keep portfolio
+accounting based on net return rather than on the utility value.
 
 Avoid untyped public APIs.
 
