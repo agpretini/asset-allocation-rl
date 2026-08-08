@@ -4,13 +4,14 @@ from dataclasses import replace
 
 import pandas as pd
 
+from agents.q_learning import QLearningAgent
 from agents.training import (
     SYNTHETIC_TRAINING_MODE,
     QLearningTrainingConfig,
     TrainingResult,
     train_q_learning_agent,
 )
-from backtesting.agents import run_agent_backtest
+from backtesting.agents import FrozenGreedyPolicy, run_agent_backtest
 from backtesting.splitter import WalkForwardSplit
 from env.portfolio_env import PortfolioEnv
 from evaluation.report import build_performance_report
@@ -78,6 +79,108 @@ def run_walk_forward_q_learning(
         )
 
     return pd.DataFrame(rows), pd.concat(paths, axis=1, sort=False)
+
+
+def run_walk_forward_train_validation_test(
+    dataset: pd.DataFrame,
+    splits: list[WalkForwardSplit],
+    training_config: QLearningTrainingConfig,
+    feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
+    simulation_config: SimulationConfig | None = None,
+) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+    """Evaluate validation and test without allowing test data into training.
+
+    The supplied configuration is treated as fixed.  For every split, the
+    validation policy is trained only on ``train``.  The final test policy is
+    a fresh agent trained on ``train + validation``; synthetic simulator
+    parameters are therefore fitted only on that combined pre-test history.
+    """
+    rows: list[dict] = []
+    paths: dict[str, pd.DataFrame] = {}
+    for split in splits:
+        train = dataset.loc[split.train_start : split.train_end]
+        validation = dataset.loc[split.validation_start : split.validation_end]
+        train_validation = dataset.loc[split.train_start : split.validation_end]
+        test = dataset.loc[split.test_start : split.test_end]
+
+        validation_training = _train_for_split(
+            train,
+            training_config,
+            feature_mode,
+            simulation_config,
+        )
+        validation_result = _run_historical_evaluation(
+            validation,
+            train,
+            validation_training.agent,
+            feature_mode,
+        )
+        final_training = _train_for_split(
+            train_validation,
+            training_config,
+            feature_mode,
+            simulation_config,
+        )
+        test_result = _run_historical_evaluation(
+            test,
+            train_validation,
+            final_training.agent,
+            feature_mode,
+        )
+        for phase, result, training_result in (
+            ("validation", validation_result, validation_training),
+            ("test", test_result, final_training),
+        ):
+            metrics = (
+                build_performance_report({"q_learning": result})
+                .loc["q_learning"]
+                .to_dict()
+            )
+            rows.append(
+                {
+                    "feature_mode": feature_mode,
+                    "split_id": split.split_id,
+                    "phase": phase,
+                    "train_start": split.train_start,
+                    "train_end": split.train_end,
+                    "validation_start": split.validation_start,
+                    "validation_end": split.validation_end,
+                    "test_start": split.test_start,
+                    "test_end": split.test_end,
+                    "training_mode": training_config.training_mode,
+                    "q_table_states": len(training_result.agent.q_table),
+                    "final_portfolio_value": float(result["portfolio_value"].iloc[-1]),
+                    **metrics,
+                },
+            )
+            paths[f"{phase}_split_{split.split_id}"] = result
+    return pd.DataFrame(rows), paths
+
+
+def _run_historical_evaluation(
+    evaluation_dataset: pd.DataFrame,
+    history_dataset: pd.DataFrame,
+    agent: QLearningAgent,
+    feature_mode: FeatureMode,
+) -> pd.DataFrame:
+    """Backtest an immutable greedy policy on real observations."""
+    q_table_size = len(agent.q_table)
+    visit_count = sum(agent.visit_counts.values())
+    env = PortfolioEnv(
+        dataset=evaluation_dataset,
+        state_builder=StateBuilder(
+            evaluation_dataset,
+            feature_mode=feature_mode,
+            history_dataset=history_dataset,
+        ),
+    )
+    result = run_agent_backtest(env, FrozenGreedyPolicy(agent))
+    if (
+        len(agent.q_table) != q_table_size
+        or sum(agent.visit_counts.values()) != visit_count
+    ):
+        raise RuntimeError("greedy evaluation modified the trained Q-learning agent")
+    return result
 
 
 def _train_for_split(

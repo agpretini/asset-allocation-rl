@@ -3,7 +3,8 @@
 This layer generates synthetic monthly training episodes without replacing the
 historical evaluation pipeline.
 
-The model is fitted exclusively on the current walk-forward training window:
+For walk-forward evaluation, the model is fitted exclusively on the active
+pre-evaluation window:
 
 1. Fixed VIX terciles define `LOW_VOL`, `MEDIUM_VOL`, and `HIGH_VOL`.
 2. A smoothed monthly Markov transition matrix models regime persistence.
@@ -16,7 +17,9 @@ USD/ARS, and VIX are reconstructed from those values. The existing
 
 `MarketSimulator.stream_episodes()` is lazy and reproducible from the configured
 seed. Synthetic observations are used only for Q-learning updates. Validation
-and test paths remain real historical data.
+and test paths remain real historical data. The full-data prediction workflow
+instead fits the simulator on all observed data available at its signal date;
+it never simulates validation or test evaluation paths.
 
 Configuration lives in `src/config/simulation.yaml`. The default Student-t
 degrees of freedom is 8, and covariance eigenvalues are floored by the configured

@@ -14,20 +14,21 @@ complete episode end to end. The first RL agent is intentionally tabular and
 simple; DQN remains a future upgrade once the evaluation loop is stable.
 
 Q-learning supports a constant learning rate and `visit_decay`. The latter
-uses `learning_rate / (1 + 0.01 * visits(state, action))`; the hyperparameter
-search evaluates the requested `0.30` initial rate alongside fixed-rate runs.
+uses `learning_rate / (1 + visit_learning_rate_decay * visits(state, action))`.
+The selected trial uses an initial rate of `0.30` and a decay coefficient of
+`0.01`; the hyperparameter search also evaluates fixed-rate alternatives.
 
 The same loop supports `historical` and `synthetic` training. Historical mode
 resets one real environment for every episode. Synthetic mode consumes a lazy
 stream of generated `PortfolioEnv` instances. Agent updates and epsilon decay
 are otherwise identical.
 
-`scripts/train_agent.py` saves:
+`uv run python src/agents/train.py` saves:
 
-- `data/processed/q_learning/q_learning_model.json`
-- `data/processed/q_learning/q_learning_training_history.csv`
-- `data/processed/q_learning/q_learning_report.csv`
-- `data/processed/q_learning/q_learning_paths.csv`
+- `analysis/runs/q_learning_default/training/q_learning_model.json`
+- `analysis/runs/q_learning_default/training/q_learning_training_history.csv`
+- `analysis/runs/q_learning_default/training/q_learning_report.csv`
+- `analysis/runs/q_learning_default/training/q_learning_paths.csv`
 
 Planned future agents from the roadmap include DQN and Double DQN.
 

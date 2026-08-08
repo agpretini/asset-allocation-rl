@@ -5,6 +5,7 @@ from typing import Protocol
 
 import pandas as pd
 
+from agents.q_learning import QLearningAgent
 from env.portfolio_env import PortfolioEnv
 
 
@@ -13,6 +14,28 @@ class ActionAgent(Protocol):
 
     def select_action(self, state: Sequence[float]) -> int:
         """Select an action ID from the current state."""
+
+
+class FrozenGreedyPolicy:
+    """Read-only deterministic greedy view of a Q-learning agent.
+
+    Evaluation must not create zero-valued Q-table entries for unseen states.
+    Those states use action zero, which is also the deterministic tie-breaker.
+    """
+
+    def __init__(self, agent: QLearningAgent) -> None:
+        self.agent = agent
+
+    def select_action(self, state: Sequence[float]) -> int:
+        """Return the lowest action ID with the best already-known value."""
+        state_key = self.agent.state_key(state)
+        q_values = self.agent.q_table.get(state_key)
+        if q_values is None:
+            return 0
+        best_value = max(q_values)
+        return min(
+            action_id for action_id, value in enumerate(q_values) if value == best_value
+        )
 
 
 def run_agent_backtest(env: PortfolioEnv, agent: ActionAgent) -> pd.DataFrame:

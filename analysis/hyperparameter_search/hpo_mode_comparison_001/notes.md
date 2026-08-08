@@ -1,0 +1,1 @@
+The source grid is extended with 18000 and 30000 episodes. Both historical and synthetic training are run for every combination. Synthetic simulators fit only on their split's training window; walk-forward metrics remain historical test metrics.

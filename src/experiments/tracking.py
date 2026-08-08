@@ -12,7 +12,7 @@ import yaml
 class ExperimentTracker:
     """Create reproducible experiment folders with standard artifacts."""
 
-    def __init__(self, root_dir: str | Path = "experiments") -> None:
+    def __init__(self, root_dir: str | Path = "analysis/hyperparameter_search") -> None:
         """Create a tracker rooted at ``root_dir``."""
         self.root_dir = Path(root_dir)
         self.root_dir.mkdir(parents=True, exist_ok=True)

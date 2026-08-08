@@ -10,5 +10,13 @@ build/
 .DS_Store
 **/.DS_Store
 
-analysis/episodes/*.csv
-analysis/episodes/*_metadata.json
+# Regenerable analytical artifacts. README files and runner code remain tracked.
+analysis/convergence/**/episode_*.csv
+analysis/convergence/**/*_metadata.json
+analysis/convergence/**/*.svg
+analysis/runs/**/training/*.csv
+analysis/runs/**/training/*.json
+analysis/runs/**/policy/*.csv
+analysis/runs/**/policy/*.svg
+analysis/runs/**/forecast/**/*.csv
+analysis/runs/**/forecast/**/*.json

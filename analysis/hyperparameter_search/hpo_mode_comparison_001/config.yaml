@@ -1,0 +1,39 @@
+dataset: data/processed/dataset/monthly_dataset.parquet
+feature_mode: compact_regime
+notes: The source grid is extended with 18000 and 30000 episodes. Both historical
+  and synthetic training are run for every combination. Synthetic simulators fit only
+  on their split's training window; walk-forward metrics remain historical test metrics.
+objective: compare all hpo_004 configurations across training modes
+search_space:
+  discount_factor: 0.95
+  episodes:
+  - 15
+  - 25
+  - 18000
+  - 30000
+  epsilon_decays:
+  - 0.9
+  - 0.95
+  - 0.999954
+  epsilons:
+  - 0.2
+  - 0.3
+  - 0.5
+  learning_rate_schedules:
+  - constant
+  - visit_decay
+  learning_rates:
+  - 0.05
+  - 0.1
+  - 0.3
+  min_epsilon: 0.02
+  seed: 42
+  state_precisions:
+  - 2
+  training_modes:
+  - historical
+  - synthetic
+  visit_learning_rate_decay: 0.01
+source_experiment: experiments/hpo_004
+trial_count: 432
+walk_forward_splits: 2

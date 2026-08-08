@@ -1,15 +1,25 @@
 """Train on all available data and predict the next target allocation."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from math import sqrt
 
 import pandas as pd
 
 from agents.q_learning import QLearningAgent
-from agents.training import QLearningTrainingConfig, train_q_learning_agent
+from agents.training import (
+    SYNTHETIC_TRAINING_MODE,
+    QLearningTrainingConfig,
+    TrainingResult,
+    train_q_learning_agent,
+)
 from env.portfolio_env import PortfolioEnv, calculate_turnover
 from features.state_builder import PortfolioContext, StateBuilder
 from features.transforms import COMPACT_REGIME_FEATURE_MODE, FeatureMode
+from simulation.market_simulator import (
+    MarketSimulator,
+    SimulationConfig,
+    load_simulation_config,
+)
 
 
 @dataclass(frozen=True)
@@ -41,6 +51,7 @@ def predict_next_allocation(
     training_config: QLearningTrainingConfig,
     current_weights: list[float] | None = None,
     feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
+    simulation_config: SimulationConfig | None = None,
 ) -> tuple[AllocationPrediction, QLearningAgent, pd.DataFrame]:
     """Train Q-learning and predict the infinite-horizon next allocation."""
     predictions, agent, history = predict_next_allocations(
@@ -48,6 +59,7 @@ def predict_next_allocation(
         training_config=training_config,
         current_weights=current_weights,
         feature_mode=feature_mode,
+        simulation_config=simulation_config,
     )
     infinite_horizon = [
         prediction
@@ -62,6 +74,7 @@ def predict_next_allocations(
     training_config: QLearningTrainingConfig,
     current_weights: list[float] | None = None,
     feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
+    simulation_config: SimulationConfig | None = None,
 ) -> tuple[list[AllocationPrediction], QLearningAgent, pd.DataFrame]:
     """Train on all data and produce myopic and infinite-horizon signals."""
     starting_weights = current_weights or [0.25, 0.25, 0.25, 0.25]
@@ -71,7 +84,13 @@ def predict_next_allocations(
         state_builder=state_builder,
         initial_weights=starting_weights,
     )
-    training_result = train_q_learning_agent(env=env, config=training_config)
+    training_result = _train_prediction_agent(
+        dataset=dataset,
+        env=env,
+        training_config=training_config,
+        feature_mode=feature_mode,
+        simulation_config=simulation_config,
+    )
 
     latest_index = len(dataset) - 1
     latest_state = state_builder.build_state(
@@ -104,6 +123,40 @@ def predict_next_allocations(
         [myopic_prediction, infinite_horizon_prediction],
         training_result.agent,
         training_result.history,
+    )
+
+
+def _train_prediction_agent(
+    dataset: pd.DataFrame,
+    env: PortfolioEnv,
+    training_config: QLearningTrainingConfig,
+    feature_mode: FeatureMode,
+    simulation_config: SimulationConfig | None,
+) -> TrainingResult:
+    """Train on the full observed history in historical or synthetic mode."""
+    if training_config.training_mode != SYNTHETIC_TRAINING_MODE:
+        return train_q_learning_agent(env=env, config=training_config)
+    selected_simulation = replace(
+        simulation_config or load_simulation_config(),
+        episode_count=training_config.episodes,
+    )
+    simulator = MarketSimulator.fit(dataset, selected_simulation)
+    episode_envs = (
+        PortfolioEnv(
+            dataset=episode,
+            state_builder=StateBuilder(
+                episode,
+                feature_mode=feature_mode,
+                history_dataset=dataset,
+            ),
+            initial_weights=env.initial_weights,
+        )
+        for episode in simulator.stream_episodes()
+    )
+    return train_q_learning_agent(
+        env=None,
+        config=training_config,
+        synthetic_episode_envs=episode_envs,
     )
 
 

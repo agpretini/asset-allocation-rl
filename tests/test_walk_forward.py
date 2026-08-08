@@ -5,7 +5,10 @@ import pandas as pd
 from agents.training import QLearningTrainingConfig
 from backtesting.feature_modes import run_feature_mode_walk_forward_comparison
 from backtesting.splitter import generate_walk_forward_splits
-from backtesting.walk_forward import run_walk_forward_q_learning
+from backtesting.walk_forward import (
+    run_walk_forward_q_learning,
+    run_walk_forward_train_validation_test,
+)
 from simulation.market_simulator import SimulationConfig
 
 
@@ -102,6 +105,28 @@ def test_synthetic_training_keeps_walk_forward_test_historical() -> None:
     assert paths.index.isin(dataset.index).all()
     assert paths.index.min() >= splits[0].test_start
     assert paths.index.max() <= splits[0].test_end
+
+
+def test_train_validation_test_protocol_has_both_historical_phases() -> None:
+    dataset = _make_walk_forward_dataset()
+    splits = generate_walk_forward_splits(
+        dates=dataset.index,
+        train_months=24,
+        validation_months=6,
+        test_months=18,
+        step_months=18,
+    )
+
+    report, paths = run_walk_forward_train_validation_test(
+        dataset=dataset,
+        splits=splits,
+        training_config=QLearningTrainingConfig(episodes=1, seed=7),
+    )
+
+    assert set(report["phase"]) == {"validation", "test"}
+    assert set(paths) == {"validation_split_0", "test_split_0"}
+    assert paths["validation_split_0"].index.max() <= splits[0].validation_end
+    assert paths["test_split_0"].index.min() >= splits[0].test_start
 
 
 def _make_walk_forward_dataset() -> pd.DataFrame:

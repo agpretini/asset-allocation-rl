@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+<rect width="100%" height="100%" fill="white"/>
+<text x="600" y="32" text-anchor="middle" font-family="sans-serif" font-size="22">Historical test comparison — split 1</text>
+<line x1="85" y1="65" x2="85" y2="525" stroke="#111"/>
+<line x1="85" y1="525" x2="1160" y2="525" stroke="#111"/>
+<line x1="85" y1="65.0" x2="1160" y2="65.0" stroke="#e5e7eb"/>
+<text x="75" y="70.0" text-anchor="end" font-family="sans-serif" font-size="12">1.87x</text>
+<line x1="85" y1="157.0" x2="1160" y2="157.0" stroke="#e5e7eb"/>
+<text x="75" y="162.0" text-anchor="end" font-family="sans-serif" font-size="12">1.68x</text>
+<line x1="85" y1="249.0" x2="1160" y2="249.0" stroke="#e5e7eb"/>
+<text x="75" y="254.0" text-anchor="end" font-family="sans-serif" font-size="12">1.50x</text>
+<line x1="85" y1="341.0" x2="1160" y2="341.0" stroke="#e5e7eb"/>
+<text x="75" y="346.0" text-anchor="end" font-family="sans-serif" font-size="12">1.31x</text>
+<line x1="85" y1="433.0" x2="1160" y2="433.0" stroke="#e5e7eb"/>
+<text x="75" y="438.0" text-anchor="end" font-family="sans-serif" font-size="12">1.12x</text>
+<line x1="85" y1="525.0" x2="1160" y2="525.0" stroke="#e5e7eb"/>
+<text x="75" y="530.0" text-anchor="end" font-family="sans-serif" font-size="12">0.94x</text>
+<polyline points="85.0,493.3 133.9,488.8 182.7,466.5 231.6,481.6 280.5,463.8 329.3,460.3 378.2,458.7 427.0,432.3 475.9,413.6 524.8,397.7 573.6,400.2 622.5,411.1 671.4,398.9 720.2,432.5 769.1,444.1 818.0,420.0 866.8,407.7 915.7,402.6 964.5,395.1 1013.4,395.4 1062.3,364.2 1111.1,291.9 1160.0,271.6" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="70" y1="570" x2="90" y2="570" stroke="#2563eb" stroke-width="3"/>
+<text x="97" y="575" font-family="sans-serif" font-size="13">q_learning_synthetic</text>
+<polyline points="85.0,493.3 133.9,467.6 182.7,452.3 231.6,473.8 280.5,447.9 329.3,430.7 378.2,424.0 427.0,410.9 475.9,400.6 524.8,405.8 573.6,371.2 622.5,388.0 671.4,372.0 720.2,379.8 769.1,415.3 818.0,420.2 866.8,384.7 915.7,355.6 964.5,341.1 1013.4,327.9 1062.3,306.4 1111.1,290.2 1160.0,288.8" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+<line x1="340" y1="570" x2="360" y2="570" stroke="#dc2626" stroke-width="3"/>
+<text x="367" y="575" font-family="sans-serif" font-size="13">sp500</text>
+<polyline points="85.0,493.3 133.9,479.3 182.7,449.9 231.6,452.7 280.5,434.9 329.3,426.5 378.2,408.1 427.0,395.3 475.9,375.0 524.8,364.6 573.6,355.7 622.5,368.8 671.4,339.6 720.2,337.8 769.1,326.2 818.0,311.1 866.8,290.1 915.7,271.9 964.5,265.9 1013.4,240.6 1062.3,184.5 1111.1,160.7 1160.0,137.8" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+<line x1="610" y1="570" x2="630" y2="570" stroke="#16a34a" stroke-width="3"/>
+<text x="637" y="575" font-family="sans-serif" font-size="13">sp500_gold_50_50</text>
+<polyline points="85.0,493.3 133.9,479.3 182.7,448.2 231.6,440.7 280.5,409.0 329.3,416.4 378.2,419.3 427.0,387.4 475.9,367.2 524.8,349.5 573.6,300.8 622.5,308.6 671.4,281.6 720.2,302.2 769.1,305.8 818.0,295.3 866.8,252.4 915.7,243.5 964.5,229.3 1013.4,235.0 1062.3,223.2 1111.1,109.1 1160.0,96.7" fill="none" stroke="#ca8a04" stroke-width="2.5"/>
+<line x1="880" y1="570" x2="900" y2="570" stroke="#ca8a04" stroke-width="3"/>
+<text x="907" y="575" font-family="sans-serif" font-size="13">equal_weight</text>
+<polyline points="85.0,493.3 133.9,470.3 182.7,446.2 231.6,439.6 280.5,402.5 329.3,426.3 378.2,437.1 427.0,409.5 475.9,392.4 524.8,373.6 573.6,301.0 622.5,306.0 671.4,283.9 720.2,321.1 769.1,309.9 818.0,302.0 866.8,272.6 915.7,276.4 964.5,262.8 1013.4,287.2 1062.3,267.8 1111.1,246.0 1160.0,235.0" fill="none" stroke="#7c3aed" stroke-width="2.5"/>
+<line x1="70" y1="595" x2="90" y2="595" stroke="#7c3aed" stroke-width="3"/>
+<text x="97" y="600" font-family="sans-serif" font-size="13">momentum</text>
+<polyline points="85.0,493.3 133.9,475.6 182.7,446.8 231.6,448.3 280.5,419.9 329.3,415.9 378.2,410.3 427.0,387.6 475.9,368.5 524.8,358.2 573.6,336.7 622.5,347.7 671.4,319.9 720.2,328.0 769.1,333.3 818.0,319.6 866.8,282.2 915.7,264.0 964.5,254.3 1013.4,245.1 1062.3,211.1 1111.1,146.4 1160.0,135.0" fill="none" stroke="#0891b2" stroke-width="2.5"/>
+<line x1="340" y1="595" x2="360" y2="595" stroke="#0891b2" stroke-width="3"/>
+<text x="367" y="600" font-family="sans-serif" font-size="13">inverse_volatility</text>
+<text x="622.5" y="625" text-anchor="middle" font-family="sans-serif" font-size="14">Historical test months: 2024-01 to 2025-11; values rebased to 1.0</text>
+<text x="23" y="295.0" text-anchor="middle" font-family="sans-serif" font-size="14" transform="rotate(-90 23 295.0)">Cumulative portfolio value</text>
+</svg>

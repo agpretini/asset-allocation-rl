@@ -22,8 +22,10 @@ leader selection, or strength label uses future data. Out-of-sample windows use
 strictly earlier history as their initial context and then expand month by
 month.
 
-The four portfolio weights are appended unchanged on the 10% action grid. With
-286 feasible allocations, the theoretical maximum is:
+The four current portfolio weights are appended unchanged. After the initial
+equal-weight reset, portfolio weights come from the 10% action grid. The policy
+inspection table covers the 286 action-grid allocations; with 286 feasible
+allocations, its theoretical maximum is:
 
 ```text
 4 leaders × 3 strengths × 3 USD/ARS regimes × 3 VIX regimes × 286 portfolios
