@@ -1,0 +1,20 @@
+{
+  "dataset_start": "2017-12-31",
+  "dataset_end": "2026-07-31",
+  "feature_mode": "compact_regime",
+  "training_config": {
+    "episodes": 22000,
+    "training_mode": "synthetic",
+    "learning_rate": 0.1,
+    "learning_rate_schedule": "constant",
+    "visit_learning_rate_decay": 0.01,
+    "discount_factor": 0.95,
+    "epsilon": 0.3,
+    "min_epsilon": 0.02,
+    "epsilon_decay": 0.95,
+    "state_precision": 2,
+    "seed": 42
+  },
+  "protocol": "Validation: fit synthetic simulator and Q-learning on train only. Test: refit a new simulator and Q-learning agent on train plus validation. Both evaluations use only historical observations and a frozen greedy policy.",
+  "overlap_note": "Test windows overlap, so charts and metrics are emitted per split rather than concatenated."
+}

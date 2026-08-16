@@ -4,7 +4,13 @@
 
 This document describes the technical architecture of the project.
 
-While `docs/PRODUCT_SPEC.md` defines the modeling decisions, this document defines how the system should be implemented.
+While `docs/PRODUCT_SPEC.md` defines the modeling decisions, this document
+defines how the system should be implemented. It is the source of truth for
+module ownership, not for product-policy parameters.
+
+“Model B” is the selected reduced-state formulation. Its definition and the
+historical A/C comparators are introduced in `docs/PRODUCT_SPEC.md`; this
+document describes only how B is partitioned into modules.
 
 If an implementation detail conflicts with `PRODUCT_SPEC.md`, the product specification takes precedence.
 
@@ -186,14 +192,20 @@ Returns used to compute the reward must correspond to the following period, usua
 
 The feature layer builds the state representation used by the RL agent.
 
-It should transform raw market and portfolio data into numerical features.
+It should transform raw market data into the learned representation and expose
+portfolio context separately to the execution layer.
 
-The default tabular implementation is `compact_regime`: a causal momentum
-leader, momentum-strength, USD/ARS-change regime, and VIX regime, followed by
-the current portfolio weights. Momentum, USD/ARS, and VIX inputs use expanding
-historical terciles through the current row only; leader ties use the fixed
-asset order. This limits the state space to 30,888 combinations including the
-portfolio allocation.
+The target Model B tabular implementation is `compact_regime`: a causal momentum
+leader, momentum-strength, USD/ARS-change regime, and VIX regime. Momentum,
+USD/ARS, and VIX inputs use expanding historical terciles through the current
+row only; leader ties use the fixed asset order. This creates 108 learned
+market states. `PortfolioEnv` still owns current weights for accounting and
+turnover, while the B policy adapter applies the decision-time cost adjustment
+outside the learned state.
+
+The repository is migrating to this target architecture. Until the migration
+items in `ROADMAP.md` are implemented, A-compatible source paths remain
+historical reference behavior rather than the product contract.
 
 The detailed `tercile_binned` representation is retained as a non-default mode
 for comparison and for the planned DQN implementation.
@@ -224,13 +236,11 @@ src/features/
 - VIX level.
 - VIX change.
 
-## Candidate Portfolio Features
+## Portfolio Context
 
-- Current portfolio weights.
-- Current portfolio value.
-- Current drawdown.
-- Previous action ID.
-- Previous month return.
+Current portfolio weights remain environment context for turnover, costs, and
+execution diagnostics. They must not be appended to the Model B tabular state.
+Portfolio value, drawdown, and prior actions are non-product research features.
 
 ## State Builder
 
@@ -243,7 +253,9 @@ state = state_builder.build_state(t, portfolio_context)
 where:
 
 - `t` is the current time index.
-- `portfolio_context` contains current weights, portfolio value, and drawdown.
+- `portfolio_context` supplies current weights for environment accounting; the
+  Model B state output must ignore it. Portfolio value and drawdown are not
+  learned Model B features.
 
 ---
 
@@ -515,11 +527,21 @@ src/agents/
 
 ### Q-Learning
 
-Useful as a simple baseline if the state can be discretized.
+The current Model B product agent over the 108 compact market states and 286
+target allocations.
+
+### Model B Policy Adapter
+
+The adapter owns inference rather than the Q-table itself. It receives market
+state `m`, current weights `p`, and the Q-values, then scores each action as
+`Q(m, a) - 0.014 × turnover(p, a)`. The product publisher evaluates that rule
+over all 286 origin portfolios and emits the deterministic modal target plus
+its modal-share diagnostic. This keeps learned state, execution costs, and
+published strategic policy as separate responsibilities.
 
 ### DQN
 
-Primary initial deep RL candidate.
+Deferred candidate for the detailed feature representation.
 
 ### Double DQN
 

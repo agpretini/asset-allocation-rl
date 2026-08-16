@@ -2,11 +2,28 @@
 
 ## Purpose
 
-This document is the source of truth for the project.
+This document is the product contract for the selected Model B formulation.
+It defines what the product learns, how it selects a target allocation, and how
+success is evaluated. Data definitions belong to `DATA_DECISIONS.md`; code
+ownership and migration boundaries belong to `ARCHITECTURE.md`.
 
-All implementations must follow the modeling decisions defined here.
+## Why “Model B”
 
-If implementation details conflict with this specification, this specification takes precedence.
+The name comes from a controlled comparison of three tabular Q-learning
+formulations:
+
+- **Model A** was the historical baseline: market state plus current portfolio
+  in the learned state, CRRA reward net of costs, and raw greedy `argmax Q`.
+- **Model B** removes the current portfolio from the learned state, keeps the
+  same CRRA reward net of costs, and applies the current portfolio only when
+  subtracting the immediate rebalance cost at action selection.
+- **Model C** uses the same reduced market state as B but ignores costs in both
+  reward and action selection; it is a frictionless control.
+
+B was selected because it materially improved state-action coverage, return,
+turnover, and policy consistency in the completed diagnostic. A and C are not
+alternative product contracts; they remain comparison references. The complete
+evidence is in `analysis/diagnostics/model_formulations/README.md`.
 
 ---
 
@@ -41,7 +58,9 @@ The problem is modeled as a Markov Decision Process (MDP).
 
 ## State
 
-The state represents the current market environment and the current portfolio situation.
+The selected product state represents the current market environment only. The
+current portfolio remains available to the execution layer to calculate a
+rebalance cost, but it is not part of the Q-learning state.
 
 The detailed feature mode consists of the following variables. It is retained
 for comparison and is the planned input to a future DQN; the compact regime
@@ -113,74 +132,8 @@ The current implementation produces:
 2 features
 ```
 
-### Portfolio Variables
-
-The portfolio state includes:
-
-- Current weight in Argentine Equities
-- Current weight in CEDEARs
-- Current weight in S&P500
-- Current weight in Gold
-
-This produces:
-
-```text
-4 features
-```
-
-### State Dimension
-
-The complete state vector contains:
-
-```text
-20 market features
-+ 2 macro features
-+ 4 portfolio features
-
-= 26 total features
-```
-
-### State Vector
-
-Conceptually:
-
-```text
-State_t = [
-
-    ARG_mom_1m,
-    ARG_mom_3m,
-    ARG_vol_3m,
-    ARG_vol_6m,
-    ARG_vol_12m,
-
-    CED_mom_1m,
-    CED_mom_3m,
-    CED_vol_3m,
-    CED_vol_6m,
-    CED_vol_12m,
-
-    SPY_mom_1m,
-    SPY_mom_3m,
-    SPY_vol_3m,
-    SPY_vol_6m,
-    SPY_vol_12m,
-
-    GLD_mom_1m,
-    GLD_mom_3m,
-    GLD_vol_3m,
-    GLD_vol_6m,
-    GLD_vol_12m,
-
-    usd_ars_change,
-    vix,
-
-    w_arg,
-    w_ced,
-    w_sp500,
-    w_gold
-
-]
-```
+The detailed market-feature mode remains available for research and a future
+DQN. It is not the product tabular state.
 
 ### Data Leakage Constraint
 
@@ -200,16 +153,14 @@ momentum_leader:   0=ARG, 1=CEDEARs, 2=S&P500, 3=Gold
 momentum_strength: 0=low, 1=medium, 2=high
 usd_ars_regime:    0=low, 1=medium, 2=high
 vix_regime:        0=low, 1=medium, 2=high
-w_arg, w_ced, w_sp500, w_gold
 ```
 
 For each asset, its 1M and 3M momentum labels are averaged. The highest score
 is the leader; ties follow the fixed asset order. The leading score is low when
 `<= 2/3`, medium when `<= 4/3`, and high otherwise. USD/ARS uses monthly
-percentage change before its expanding-tercile regime is calculated. Portfolio
-weights are not binned: they retain their 10% action-space grid.
+percentage change before its expanding-tercile regime is calculated.
 
-This representation has at most `4 × 3 × 3 × 3 × 286 = 30,888` states. The
+This representation has `4 × 3 × 3 × 3 = 108` learned states. The
 previous detailed 22-feature `tercile_binned` state remains available for
 comparison and is reserved as the intended input representation for the next
 DQN experiment.
@@ -370,6 +321,27 @@ based on `R_net,t`, rather than on utility. CRRA makes the agent moderately
 risk-averse; equivalent gains and losses in percentage terms do not receive
 equal utility. Volatility is not added as a separate penalty because the
 concave utility already accounts for risk preferences.
+
+## Product Decision Rule
+
+For a market state `m`, starting portfolio `p`, and candidate target `a`, Model
+B selects the execution-aware action:
+
+```text
+score(m, p, a) = Q(m, a) - 0.014 × turnover(p, a)
+target(m, p) = argmax_a score(m, p, a)
+```
+
+The published product target is the mode of `target(m, p)` over all 286
+action-grid starting portfolios. A tie uses the lowest action ID. This produces
+a stable strategic target even when a user's exact starting weights do not lie
+on the grid. The exact starting-portfolio rule remains the execution-layer
+diagnostic.
+
+Across the 108 market regimes in the completed diagnostic, the median modal
+share is 74.5% (reported operationally as 74%) of the 286 possible starting
+portfolios. The modal share is a confidence descriptor, not a performance
+guarantee.
 
 ---
 

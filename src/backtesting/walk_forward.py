@@ -1,5 +1,6 @@
 """Walk-forward evaluation for the first RL agent."""
 
+from collections.abc import Callable
 from dataclasses import replace
 
 import pandas as pd
@@ -11,7 +12,7 @@ from agents.training import (
     TrainingResult,
     train_q_learning_agent,
 )
-from backtesting.agents import FrozenGreedyPolicy, run_agent_backtest
+from backtesting.agents import CostAwareFrozenPolicy, run_agent_backtest
 from backtesting.splitter import WalkForwardSplit
 from env.portfolio_env import PortfolioEnv
 from evaluation.report import build_performance_report
@@ -22,6 +23,8 @@ from simulation.market_simulator import (
     SimulationConfig,
     load_simulation_config,
 )
+
+WalkForwardProgressCallback = Callable[[str, int, str], None]
 
 
 def run_walk_forward_q_learning(
@@ -48,15 +51,12 @@ def run_walk_forward_q_learning(
             simulation_config=simulation_config,
         )
 
-        test_env = PortfolioEnv(
-            dataset=test_dataset,
-            state_builder=StateBuilder(
-                test_dataset,
-                feature_mode=feature_mode,
-                history_dataset=test_history,
-            ),
+        test_result = _run_historical_evaluation(
+            evaluation_dataset=test_dataset,
+            history_dataset=test_history,
+            agent=training_result.agent,
+            feature_mode=feature_mode,
         )
-        test_result = run_agent_backtest(test_env, training_result.agent)
         report = build_performance_report({"q_learning": test_result})
         metrics = report.loc["q_learning"].to_dict()
         rows.append(
@@ -87,6 +87,7 @@ def run_walk_forward_train_validation_test(
     training_config: QLearningTrainingConfig,
     feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
     simulation_config: SimulationConfig | None = None,
+    progress_callback: WalkForwardProgressCallback | None = None,
 ) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Evaluate validation and test without allowing test data into training.
 
@@ -98,16 +99,31 @@ def run_walk_forward_train_validation_test(
     rows: list[dict] = []
     paths: dict[str, pd.DataFrame] = {}
     for split in splits:
+        _emit_progress(
+            progress_callback, "split_started", split.split_id, "Preparing data"
+        )
         train = dataset.loc[split.train_start : split.train_end]
         validation = dataset.loc[split.validation_start : split.validation_end]
         train_validation = dataset.loc[split.train_start : split.validation_end]
         test = dataset.loc[split.test_start : split.test_end]
 
+        _emit_progress(
+            progress_callback,
+            "validation_training",
+            split.split_id,
+            "Training on train window for validation",
+        )
         validation_training = _train_for_split(
             train,
             training_config,
             feature_mode,
             simulation_config,
+        )
+        _emit_progress(
+            progress_callback,
+            "validation_evaluation",
+            split.split_id,
+            "Evaluating frozen policy on historical validation",
         )
         validation_result = _run_historical_evaluation(
             validation,
@@ -115,11 +131,23 @@ def run_walk_forward_train_validation_test(
             validation_training.agent,
             feature_mode,
         )
+        _emit_progress(
+            progress_callback,
+            "test_training",
+            split.split_id,
+            "Retraining on train plus validation for test",
+        )
         final_training = _train_for_split(
             train_validation,
             training_config,
             feature_mode,
             simulation_config,
+        )
+        _emit_progress(
+            progress_callback,
+            "test_evaluation",
+            split.split_id,
+            "Evaluating frozen policy on historical test",
         )
         test_result = _run_historical_evaluation(
             test,
@@ -154,7 +182,24 @@ def run_walk_forward_train_validation_test(
                 },
             )
             paths[f"{phase}_split_{split.split_id}"] = result
+        _emit_progress(
+            progress_callback,
+            "split_completed",
+            split.split_id,
+            "Validation and test metrics completed",
+        )
     return pd.DataFrame(rows), paths
+
+
+def _emit_progress(
+    callback: WalkForwardProgressCallback | None,
+    stage: str,
+    split_id: int,
+    message: str,
+) -> None:
+    """Notify an optional caller without coupling evaluation to file output."""
+    if callback is not None:
+        callback(stage, split_id, message)
 
 
 def _run_historical_evaluation(
@@ -174,7 +219,9 @@ def _run_historical_evaluation(
             history_dataset=history_dataset,
         ),
     )
-    result = run_agent_backtest(env, FrozenGreedyPolicy(agent))
+    result = run_agent_backtest(
+        env, CostAwareFrozenPolicy(agent, env.action_space, env.transaction_cost)
+    )
     if (
         len(agent.q_table) != q_table_size
         or sum(agent.visit_counts.values()) != visit_count

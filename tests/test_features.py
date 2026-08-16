@@ -49,10 +49,23 @@ def test_market_features_use_past_and_current_values_only(
     assert features.loc["2021-01-31", "usd_ars"] == pytest.approx(112.0)
 
 
-def test_state_builder_appends_portfolio_weights(
+def test_compact_state_builder_excludes_portfolio_weights_for_model_b(
     feature_dataset: pd.DataFrame,
 ) -> None:
     state_builder = StateBuilder(feature_dataset)
+    state = state_builder.build_state(
+        row_index=state_builder.first_valid_index(),
+        portfolio_context=PortfolioContext(weights=[0.1, 0.2, 0.3, 0.4]),
+    )
+
+    assert len(state) == 4
+    assert state != pytest.approx([0.1, 0.2, 0.3, 0.4])
+
+
+def test_state_builder_can_include_portfolio_weights_for_legacy_model_a(
+    feature_dataset: pd.DataFrame,
+) -> None:
+    state_builder = StateBuilder(feature_dataset, include_portfolio_context=True)
     state = state_builder.build_state(
         row_index=state_builder.first_valid_index(),
         portfolio_context=PortfolioContext(weights=[0.1, 0.2, 0.3, 0.4]),
@@ -98,9 +111,9 @@ def test_state_builder_defaults_to_compact_regime_state(
         "usd_ars_regime",
         "vix_regime",
     ]
-    assert len(state) == 8
+    assert len(state) == 4
     assert state[0] in {0.0, 1.0, 2.0, 3.0}
-    assert all(value in {0.0, 1.0, 2.0} for value in state[1:-4])
+    assert all(value in {0.0, 1.0, 2.0} for value in state[1:])
 
 
 def test_state_builder_keeps_detailed_tercile_mode_available(

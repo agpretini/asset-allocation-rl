@@ -117,16 +117,28 @@ def test_train_validation_test_protocol_has_both_historical_phases() -> None:
         step_months=18,
     )
 
+    events: list[tuple[str, int, str]] = []
     report, paths = run_walk_forward_train_validation_test(
         dataset=dataset,
         splits=splits,
         training_config=QLearningTrainingConfig(episodes=1, seed=7),
+        progress_callback=lambda stage, split_id, message: events.append(
+            (stage, split_id, message)
+        ),
     )
 
     assert set(report["phase"]) == {"validation", "test"}
     assert set(paths) == {"validation_split_0", "test_split_0"}
     assert paths["validation_split_0"].index.max() <= splits[0].validation_end
     assert paths["test_split_0"].index.min() >= splits[0].test_start
+    assert [stage for stage, _, _ in events] == [
+        "split_started",
+        "validation_training",
+        "validation_evaluation",
+        "test_training",
+        "test_evaluation",
+        "split_completed",
+    ]
 
 
 def _make_walk_forward_dataset() -> pd.DataFrame:

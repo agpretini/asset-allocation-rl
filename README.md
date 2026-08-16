@@ -29,23 +29,28 @@ uv run python analysis/walk_forward/run.py
 uv run python experiments/hpo/run.py
 ```
 
-The selected operational model is documented and executed from:
+The selected operational Model B configuration is documented and executed from:
 
 ```bash
-uv run python analysis/runs/selected_synthetic_trial_371/run.py
+caffeinate -i uv run python analysis/runs/run.py
 ```
 
-It writes all validation, test, policy, and forecast artifacts beside that
-runner. The current August 2026 infinite-horizon signal is 100% S&P 500 from
-the July 2026 close; see its dated forecast directory for assumptions.
+It derives its destination from `run_label` in the selected-model YAML and
+writes validation, test, policy, and forecast artifacts together. The current
+selected run is `analysis/runs/model_b_synthetic_trial_076/`. Its August 2026
+strategic Model B signal, from the July 2026 close, is 100% Gold; see its dated
+forecast directory for the full decision record and assumptions.
 
 ## Model Summary
 
-The default tabular state is `compact_regime`: momentum leader and strength,
-USD/ARS regime, VIX regime, and current allocation. It has a 286-allocation
-action grid and a 30,888 action-grid state table. Rewards use CRRA utility with
-relative risk aversion `gamma = 0.5`; performance reports use financial net
-returns rather than utility.
+The default tabular state is Model B `compact_regime`: momentum leader and
+strength, USD/ARS regime, and VIX regime. It has 108 market states and a
+286-allocation action grid. The current allocation is excluded from the learned
+state; at execution, each target is scored as Q-value minus immediate
+rebalancing cost, and the published target is the deterministic modal choice
+across all permitted origins. Rewards use CRRA utility with relative risk
+aversion `gamma = 0.5`; performance reports use financial net returns rather
+than utility.
 
 Synthetic training fits a three-regime VIX model only on the available training
 data, simulates primitive monthly variables lazily, and reconstructs features
@@ -53,6 +58,8 @@ through the same causal pipeline. Validation and test remain historical.
 
 ## Methodological Note
 
-Trial 371 was selected from HPO walk-forward test metrics. It is useful for
-operational analysis, but future research should reserve a final untouched
-holdout or select configurations from validation-only metrics.
+Trial 76 is the selected Model B configuration for product analysis. Its
+initial HPO ranking was calculated before the cost-aware Model B evaluator was
+corrected, so the committed production run must be interpreted as an honest
+configuration evaluation rather than a claim of an untouched final holdout.
+Future selection should use validation-only metrics and retain a final holdout.

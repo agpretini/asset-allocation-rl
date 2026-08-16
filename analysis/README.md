@@ -13,9 +13,10 @@ dataset. Run scripts from the repository root.
 - `comparison/`: standard model-versus-baseline reports.
 - `convergence/`: synthetic-training convergence studies.
 - `hyperparameter_search/`: HPO results and immutable snapshots.
-- `runs/`: complete model-run artifacts, including the selected synthetic run.
+- `runs/`: complete model-run artifacts, including the selected Model B run.
 - `forecasts/`: standard forward-looking allocation outputs.
+- `diagnostics/`: focused controlled investigations of policy behaviour.
 
-The selected model is fully self-contained in
-`runs/selected_synthetic_trial_371/`; do not scatter new artifacts for that run
-across topic folders.
+The selected product model is fully self-contained in
+`runs/model_b_synthetic_trial_076/`; do not scatter its artifacts across topic
+folders. Trial 371 remains a legacy research run.

@@ -1,9 +1,9 @@
 # Feature Layer
 
-`StateBuilder` builds causal market states and appends the current portfolio
-weights. The default is a compact regime representation designed for tabular
-Q-learning; it deliberately limits the reachable state space so state-action
-pairs can be revisited during synthetic training.
+`StateBuilder` builds causal market states. The default is the Model B compact
+regime representation: it deliberately excludes current portfolio weights from
+the learned state so state-action pairs can be revisited during synthetic
+training. The environment still receives weights for turnover and accounting.
 
 ## Default: `compact_regime`
 
@@ -22,18 +22,14 @@ leader selection, or strength label uses future data. Out-of-sample windows use
 strictly earlier history as their initial context and then expand month by
 month.
 
-The four current portfolio weights are appended unchanged. After the initial
-equal-weight reset, portfolio weights come from the 10% action grid. The policy
-inspection table covers the 286 action-grid allocations; with 286 feasible
-allocations, its theoretical maximum is:
+The learned state has four values and therefore 108 possible combinations:
 
 ```text
-4 leaders × 3 strengths × 3 USD/ARS regimes × 3 VIX regimes × 286 portfolios
-= 30,888 states
+4 leaders × 3 strengths × 3 USD/ARS regimes × 3 VIX regimes = 108 states
 ```
 
-The actual state vector has 8 values: four market-regime values plus four
-weights.
+`include_portfolio_context=True` is retained only for Model A diagnostics and
+legacy comparison paths. It creates the former eight-value state.
 
 ## Other feature modes
 

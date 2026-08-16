@@ -15,28 +15,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from agents.q_learning import QLearningAgent
     from env.portfolio_env import PortfolioEnv
-
-
-class FrozenGreedyPolicy:
-    """Read-only deterministic greedy view of a Q-learning agent."""
-
-    def __init__(self, agent: QLearningAgent) -> None:
-        self.agent = agent
-
-    def select_action(self, state: Sequence[float]) -> int:
-        """Select the lowest action ID among maximal existing Q-values."""
-        state_key = self.agent.state_key(state)
-        q_values = self.agent.q_table.get(state_key)
-        if q_values is None:
-            return 0
-        best_value = max(q_values)
-        return min(
-            action_id for action_id, value in enumerate(q_values) if value == best_value
-        )
 
 
 def main() -> None:
@@ -134,6 +114,10 @@ def main() -> None:
         "epsilon": args.epsilon,
         "min_epsilon": args.min_epsilon,
         "epsilon_decay": args.epsilon_decay,
+        "formulation": (
+            "Model B: market-only compact state, CRRA net reward, "
+            "cost-aware validation policy"
+        ),
         "simulation_config": asdict(simulation_config),
     }
     output_prefix.with_name(f"{output_prefix.name}_metadata.json").write_text(
@@ -152,10 +136,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=0.30)
     parser.add_argument("--visit-learning-rate-decay", type=float, default=0.01)
     parser.add_argument("--discount-factor", type=float, default=0.95)
-    parser.add_argument("--epsilon", type=float, default=0.50)
+    parser.add_argument("--epsilon", type=float, default=0.20)
     parser.add_argument("--min-epsilon", type=float, default=0.02)
     parser.add_argument("--epsilon-decay", type=float, default=0.999954)
-    parser.add_argument("--output-prefix", default="episode_convergence")
+    parser.add_argument("--output-prefix", default="model_b_001/episode_convergence")
     return parser.parse_args()
 
 
@@ -187,7 +171,7 @@ def _evaluate_checkpoint(
     validation_history: pd.DataFrame,
 ) -> dict[str, float | int]:
     """Evaluate a read-only epsilon-zero policy on historical validation."""
-    from backtesting.agents import run_agent_backtest
+    from backtesting.agents import CostAwareFrozenPolicy, run_agent_backtest
     from env.portfolio_env import PortfolioEnv
     from evaluation.report import build_performance_report
     from features.state_builder import StateBuilder
@@ -201,7 +185,10 @@ def _evaluate_checkpoint(
             history_dataset=validation_history,
         ),
     )
-    result = run_agent_backtest(validation_env, FrozenGreedyPolicy(agent))
+    result = run_agent_backtest(
+        validation_env,
+        CostAwareFrozenPolicy(agent, validation_env.action_space),
+    )
     metrics = build_performance_report({"validation": result}).loc["validation"]
     if len(agent.q_table) != q_table_size_before:
         raise RuntimeError("greedy evaluation modified the Q-table")
@@ -272,7 +259,7 @@ def _write_reward_svg(results: pd.DataFrame, destination: Path) -> None:
         (
             '<text x="500" y="32" text-anchor="middle" '
             'font-family="sans-serif" font-size="22">'
-            "Greedy validation reward during synthetic training</text>"
+            "Model B cost-aware validation reward during synthetic training</text>"
         ),
         (
             f'<line x1="{left}" y1="{top}" x2="{left}" '

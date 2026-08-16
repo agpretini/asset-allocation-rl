@@ -16,7 +16,8 @@ are plain data frames so they can be saved as CSV, displayed in notebooks, or
 compared in tests.
 
 `artifacts.py` additionally writes dependency-free SVG cumulative-value charts.
-The selected synthetic-model workflow writes one chart and one metrics table
-per test split under `analysis/runs/selected_synthetic_trial_371/comparison/`.
+The selected Model B workflow writes one chart and one metrics table per test
+split under `analysis/runs/<run_label>/comparison/` (currently
+`analysis/runs/model_b_synthetic_trial_076/comparison/`).
 Test windows overlap, so they are intentionally not stitched into a single
 time series or pooled cumulative return.

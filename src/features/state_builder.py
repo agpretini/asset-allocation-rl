@@ -35,6 +35,7 @@ class StateBuilder:
         macro_columns: list[str] | None = None,
         feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
         history_dataset: pd.DataFrame | None = None,
+        include_portfolio_context: bool | None = None,
     ) -> None:
         """Prepare reusable market features for one dataset.
 
@@ -51,6 +52,11 @@ class StateBuilder:
             if column in dataset.columns
         ]
         self.feature_mode = feature_mode
+        self.include_portfolio_context = (
+            feature_mode != COMPACT_REGIME_FEATURE_MODE
+            if include_portfolio_context is None
+            else include_portfolio_context
+        )
         self.return_columns = [f"r_{prefix}" for prefix in self.asset_prefixes]
         macro_mode = (
             MACRO_MODE_CHANGE
@@ -86,10 +92,10 @@ class StateBuilder:
         feature_row = self.market_features.iloc[row_index]
         if feature_row.isna().any():
             raise ValueError("state contains missing features at this row")
-        return [
-            *[float(value) for value in feature_row.to_list()],
-            *[float(weight) for weight in portfolio_context.weights],
-        ]
+        market_state = [float(value) for value in feature_row.to_list()]
+        if not self.include_portfolio_context:
+            return market_state
+        return [*market_state, *[float(weight) for weight in portfolio_context.weights]]
 
     def first_valid_index(self) -> int:
         """Return the first row index where all market features are available."""
@@ -100,7 +106,9 @@ class StateBuilder:
 
     def state_size(self) -> int:
         """Return the number of values in each state vector."""
-        return len(self.market_features.columns) + len(self.asset_prefixes)
+        return len(self.market_features.columns) + (
+            len(self.asset_prefixes) if self.include_portfolio_context else 0
+        )
 
     def _validate_row_index(self, row_index: int) -> None:
         """Validate row index bounds."""

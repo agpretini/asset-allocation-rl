@@ -3,7 +3,22 @@
 import pandas as pd
 
 from agents.training import QLearningTrainingConfig
-from prediction.next_allocation import predict_next_allocation, predict_next_allocations
+from prediction.next_allocation import (
+    predict_next_allocation,
+    predict_next_allocations,
+    select_modal_model_b_action,
+)
+
+
+def test_modal_model_b_action_uses_lowest_id_for_modal_tie() -> None:
+    action_id, share = select_modal_model_b_action(
+        q_values=[1.0, 1.0],
+        action_space=[[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]],
+        transaction_cost=0.014,
+    )
+
+    assert action_id == 0
+    assert share == 0.5
 
 
 def test_predict_next_allocation_returns_valid_weights() -> None:
@@ -32,7 +47,7 @@ def test_predict_next_allocation_returns_valid_weights() -> None:
     assert not history.empty
 
 
-def test_predict_next_allocations_returns_myopic_and_infinite_horizon() -> None:
+def test_predict_next_allocations_returns_myopic_and_modal_model_b_policy() -> None:
     dataset = _make_prediction_dataset()
 
     predictions, _, _ = predict_next_allocations(
@@ -44,7 +59,7 @@ def test_predict_next_allocations_returns_myopic_and_infinite_horizon() -> None:
     methods = {prediction.method for prediction in predictions}
     assert methods == {
         "myopic_greedy_latest_return",
-        "infinite_horizon_q_learning",
+        "model_b_modal_market_policy",
     }
 
 

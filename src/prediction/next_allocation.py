@@ -64,7 +64,7 @@ def predict_next_allocation(
     infinite_horizon = [
         prediction
         for prediction in predictions
-        if prediction.method == "infinite_horizon_q_learning"
+        if prediction.method == "model_b_modal_market_policy"
     ][0]
     return infinite_horizon, agent, history
 
@@ -110,7 +110,7 @@ def predict_next_allocations(
         signal_date=signal_date,
         target_period=target_period,
     )
-    infinite_horizon_prediction = _build_infinite_horizon_prediction(
+    infinite_horizon_prediction = _build_modal_model_b_prediction(
         q_values=q_values,
         action_space=env.action_space,
         current_weights=starting_weights,
@@ -160,7 +160,7 @@ def _train_prediction_agent(
     )
 
 
-def _build_infinite_horizon_prediction(
+def _build_modal_model_b_prediction(
     q_values: list[float],
     action_space: list[list[float]],
     current_weights: list[float],
@@ -169,11 +169,11 @@ def _build_infinite_horizon_prediction(
     state_source: str,
     nearest_distance: float,
 ) -> AllocationPrediction:
-    """Build the discounted infinite-horizon Q-learning signal."""
-    action_id = _select_best_action(q_values)
+    """Publish the deterministic modal Model B target across all origins."""
+    action_id, modal_share = select_modal_model_b_action(q_values, action_space)
     weights = action_space[action_id]
     return AllocationPrediction(
-        method="infinite_horizon_q_learning",
+        method="model_b_modal_market_policy",
         signal_date=signal_date.date().isoformat(),
         target_period=target_period.strftime("%Y-%m"),
         action_id=action_id,
@@ -182,8 +182,8 @@ def _build_infinite_horizon_prediction(
         w_sp500=weights[2],
         w_gold=weights[3],
         q_value=float(q_values[action_id]),
-        score=float(q_values[action_id]),
-        score_name="discounted_q_value",
+        score=modal_share,
+        score_name="modal_target_share",
         state_source=state_source,
         nearest_state_distance=nearest_distance,
         expected_turnover=calculate_turnover(weights, current_weights),
@@ -286,6 +286,26 @@ def _select_best_action(q_values: list[float]) -> int:
     return min(
         action_id for action_id, value in enumerate(q_values) if value == best_value
     )
+
+
+def select_modal_model_b_action(
+    q_values: list[float],
+    action_space: list[list[float]],
+    transaction_cost: float = 0.014,
+) -> tuple[int, float]:
+    """Return Model B's modal cost-aware target and its share of origins."""
+    if len(q_values) != len(action_space):
+        raise ValueError("q_values and action_space must have the same length")
+    action_ids = []
+    for starting_weights in action_space:
+        scores = [
+            value - transaction_cost * calculate_turnover(target, starting_weights)
+            for value, target in zip(q_values, action_space, strict=True)
+        ]
+        action_ids.append(_select_best_action(scores))
+    counts = {action_id: action_ids.count(action_id) for action_id in set(action_ids)}
+    action_id = min(counts, key=lambda candidate: (-counts[candidate], candidate))
+    return action_id, counts[action_id] / len(action_space)
 
 
 def _has_learned_values(q_values: list[float]) -> bool:

@@ -20,3 +20,31 @@ analysis/runs/**/policy/*.csv
 analysis/runs/**/policy/*.svg
 analysis/runs/**/forecast/**/*.csv
 analysis/runs/**/forecast/**/*.json
+analysis/diagnostics/**/results*/
+
+# Regenerable HPO outputs. The selected-model configuration and README files
+# remain versioned; raw trial tables are not source-of-truth artifacts.
+analysis/hyperparameter_search/*/config.yaml
+analysis/hyperparameter_search/*/notes.md
+analysis/hyperparameter_search/*/results.csv
+analysis/hyperparameter_search/*/summary.md
+!analysis/hyperparameter_search/current/best_hyperparameters.yaml
+!analysis/hyperparameter_search/*/README.md
+
+# Keep only the selected production run's generated artifacts in version
+# control. Other run outputs are reproducible and intentionally ignored.
+analysis/runs/**/comparison/*
+analysis/runs/**/walk_forward/*
+analysis/runs/**/policy/*
+analysis/runs/**/forecast/*
+analysis/runs/**/run.log
+analysis/runs/**/status.json
+analysis/runs/**/policy/*.md
+!analysis/runs/**/README.md
+!analysis/runs/model_b_synthetic_trial_076/
+!analysis/runs/model_b_synthetic_trial_076/**
+
+# Selected-run provenance is represented by configuration and prediction
+# metadata; the full Q-table and per-episode history are too large to version.
+analysis/runs/model_b_synthetic_trial_076/forecast/**/trained_model.json
+analysis/runs/model_b_synthetic_trial_076/forecast/**/training_history.csv

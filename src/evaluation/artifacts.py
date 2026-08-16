@@ -49,6 +49,7 @@ def write_cumulative_return_svg(
         "#7c3aed",
         "#0891b2",
         "#4b5563",
+        "#be123c",
     ]
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',

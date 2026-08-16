@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document records all data-related decisions that have been finalized for the project.
+This document records the data universe, transformations, frequency, and
+causality decisions. It does not define the product policy or reward; those
+belong to `PRODUCT_SPEC.md`.
 
 These decisions are considered part of the project's baseline assumptions.
 
@@ -472,9 +474,12 @@ Market levels are reconstructed before the normal feature pipeline runs.
 
 Tabular Q-learning uses `compact_regime` as its default state representation.
 The state aggregates detailed causal market inputs into momentum leader,
-momentum strength, USD/ARS regime, and VIX regime, then appends the current
-portfolio weights. This constrains the theoretical tabular state space to
-30,888 states including portfolio allocations.
+momentum strength, USD/ARS regime, and VIX regime. Model B learns these four
+market variables only, yielding 108 possible market states. Portfolio weights
+remain a 286-allocation action grid and are used only by the decision-time
+execution-cost calculation defined in `PRODUCT_SPEC.md`. Model B is the
+selected product formulation; the A/C names are diagnostic comparators defined
+there, not alternative data schemas.
 
 ## Rationale
 

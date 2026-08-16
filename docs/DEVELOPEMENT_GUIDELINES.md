@@ -28,6 +28,25 @@ Avoid clever code that is difficult to understand.
 
 Prefer simple and explicit implementations unless performance becomes a proven bottleneck.
 
+## Documentation Boundaries
+
+Keep product decisions in `docs/PRODUCT_SPEC.md`, data decisions in
+`docs/DATA_DECISIONS.md`, architecture ownership in `docs/ARCHITECTURE.md`, and
+future work in `docs/ROADMAP.md`. Update the relevant document when behavior
+changes; do not duplicate the full Model B decision rule across all documents.
+
+## Model B Invariants
+
+Model B is the selected market-only formulation defined in
+`docs/PRODUCT_SPEC.md`; A and C are diagnostic comparators, not production
+interfaces.
+
+For product code, tests must verify that the learned tabular state contains
+only the four compact market variables, while current portfolio weights remain
+available for turnover and the inference-time cost adjustment. The published
+target must use the deterministic mode across the 286 origin portfolios, with
+the lowest action ID as the tie-breaker.
+
 ---
 
 # Python Version

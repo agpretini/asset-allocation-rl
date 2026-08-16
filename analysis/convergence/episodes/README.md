@@ -1,7 +1,10 @@
 # Synthetic Episode Convergence Analysis
 
-This experiment measures whether tabular Q-learning continues to improve over
-70,000 synthetic episodes or reaches a stable greedy policy.
+This experiment measures whether **Model B** tabular Q-learning continues to
+improve over 70,000 synthetic episodes or reaches a stable cost-aware policy.
+The historical `episode_convergence.*` artifacts at this folder's root belong
+to the prior A-style configuration and are preserved for comparison. New Model
+B artifacts are written under `model_b_001/` by default.
 
 ## Design
 
@@ -12,7 +15,8 @@ This experiment measures whether tabular Q-learning continues to improve over
 - The test window is not used for fitting, training, checkpoint selection, or
   this curve.
 - The policy is evaluated before training and every 2,000 episodes thereafter.
-- Every checkpoint uses a deterministic greedy policy with `epsilon=0`.
+- Every checkpoint uses a deterministic Model B policy with `epsilon=0`: it
+  scores `Q(m, a) - 0.014 × turnover(current, a)` without updating the Q-table.
 - The evaluator never calls `update`, never inserts Q-table states, and never
   changes training epsilon.
 - Greedy ties are resolved by the lowest action ID, so checkpoint results are
@@ -38,20 +42,19 @@ learning rate:             0.30
 learning-rate schedule:    visit_decay
 visit decay:               0.01
 discount factor:           0.95
-initial epsilon:           0.50
+initial epsilon:           0.20
 minimum epsilon:           0.02
 epsilon decay:             0.999954 per episode
 seed:                      simulation.yaml (42)
 ```
 
-With these values, `epsilon = max(0.02, 0.50 × 0.999954^episode)` reaches its
-floor approximately at episode 70,000. Exploration therefore remains material
-throughout this experiment instead of collapsing during its first few dozen
-episodes.
+With these values, `epsilon = max(0.02, 0.20 × 0.999954^episode)` decays
+gradually and reaches the 0.02 floor late in the run.
 
-`compact_regime` has at most 30,888 reachable state combinations including the
-current portfolio allocation. This makes repeated visits practical for tabular
-Q-learning and keeps the dense 286-action Q-table tractable. The former
+Model B's `compact_regime` has 108 learned market states. The current portfolio
+is excluded from the Q-table and is used only when the validation policy scores
+execution costs. This makes repeated visits practical for tabular Q-learning.
+The former
 detailed `tercile_binned` state is retained for comparison and the planned DQN
 work, but is not appropriate for this 70,000-episode tabular experiment.
 
@@ -70,14 +73,16 @@ uv run python analysis/convergence/episodes/run.py \
   --episodes 20 \
   --evaluation-interval 5 \
   --episode-length 24 \
-  --output-prefix smoke
+  --output-prefix model_b_smoke/episode_convergence
 ```
 
 ## Outputs
 
-- `episode_convergence.csv`: checkpoint metrics.
-- `episode_convergence.svg`: line chart of validation cumulative reward.
-- `episode_convergence_metadata.json`: configuration and split dates.
+- `model_b_001/episode_convergence.csv`: checkpoint metrics.
+- `model_b_001/episode_convergence.svg`: line chart of validation cumulative
+  reward.
+- `model_b_001/episode_convergence_metadata.json`: configuration, formulation,
+  and split dates.
 
 CSV and SVG are updated after every checkpoint, so partial results remain
 available if a run is stopped. The SVG is dependency-free and opens in any web

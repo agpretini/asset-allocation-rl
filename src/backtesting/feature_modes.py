@@ -3,7 +3,7 @@
 import pandas as pd
 
 from agents.training import QLearningTrainingConfig, train_q_learning_agent
-from backtesting.agents import run_agent_backtest
+from backtesting.agents import CostAwareFrozenPolicy, run_agent_backtest
 from backtesting.splitter import WalkForwardSplit
 from backtesting.walk_forward import run_walk_forward_q_learning
 from env.portfolio_env import PortfolioEnv
@@ -69,7 +69,10 @@ def run_feature_mode_decision_comparison(
                     history_dataset=test_history,
                 ),
             )
-            path = run_agent_backtest(test_env, training_result.agent).reset_index()
+            path = run_agent_backtest(
+                test_env,
+                CostAwareFrozenPolicy(training_result.agent, test_env.action_space),
+            ).reset_index()
             weights = pd.DataFrame(
                 path["weights"].to_list(),
                 columns=["w_arg", "w_ced", "w_sp500", "w_gold"],

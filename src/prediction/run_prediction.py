@@ -43,14 +43,14 @@ def main() -> None:
         current_weights=current_weights,
         feature_mode=args.feature_mode,
     )
-    infinite_horizon_prediction = [
+    product_prediction = [
         prediction
         for prediction in predictions
-        if prediction.method == "infinite_horizon_q_learning"
+        if prediction.method == "model_b_modal_market_policy"
     ][0]
 
     output_dir = _prediction_output_dir(
-        target_period=infinite_horizon_prediction.target_period,
+        target_period=product_prediction.target_period,
         feature_mode=args.feature_mode,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -58,7 +58,7 @@ def main() -> None:
         output_dir / "allocation_predictions.csv",
         index=False,
     )
-    pd.DataFrame([infinite_horizon_prediction.to_dict()]).to_csv(
+    pd.DataFrame([product_prediction.to_dict()]).to_csv(
         output_dir / "allocation_prediction.csv",
         index=False,
     )

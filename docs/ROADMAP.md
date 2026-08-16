@@ -24,6 +24,34 @@ A simple working system is preferred over an incomplete sophisticated system.
 
 ---
 
+# Current Product Migration - Model B
+
+## Status
+
+The diagnostic selected Model B as the principal formulation: a 108-state
+compact market Q-table, CRRA reward net of trading costs, a cost-aware
+execution score, and a modal product target across the 286 origin portfolios.
+The documented diagnostic evidence is in
+`analysis/diagnostics/model_formulations/README.md`.
+
+The A/B/C formulation names and their respective roles are defined in
+`docs/PRODUCT_SPEC.md`; this roadmap records only B's migration work.
+
+## Remaining implementation work
+
+1. Make the production `StateBuilder` expose the market-only Model B state.
+2. Add the cost-aware B policy adapter to production training, backtesting, and
+   forecasting paths without changing historical accounting.
+3. Publish the deterministic modal target and modal-share confidence indicator.
+4. Add unit and integration tests for state exclusion, scoring, modal
+   tie-breaking, and read-only evaluation.
+5. Re-run clean walk-forward evaluation on fresh windows before release.
+
+The older milestones below remain the historical implementation record. They
+do not override the Model B product contract.
+
+---
+
 # Milestone 0 - Project Setup
 
 ## Goal

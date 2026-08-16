@@ -23,6 +23,10 @@ resets one real environment for every episode. Synthetic mode consumes a lazy
 stream of generated `PortfolioEnv` instances. Agent updates and epsilon decay
 are otherwise identical.
 
+For Model B, the default `compact_regime` state contains only the four market
+regime variables. Portfolio-dependent execution scoring belongs to the
+backtesting and prediction policy adapters, not to Q-learning training.
+
 `uv run python src/agents/train.py` saves:
 
 - `analysis/runs/q_learning_default/training/q_learning_model.json`

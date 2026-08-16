@@ -1,4 +1,4 @@
-"""Compare the latest HPO grid across historical and synthetic training."""
+"""Run a resumable Model B synthetic HPO grid from a reference experiment."""
 
 from __future__ import annotations
 
@@ -17,14 +17,11 @@ if TYPE_CHECKING:
 
 sys.path.append(str(Path(__file__).resolve().parents[2] / "src"))
 
-LONG_EPISODE_COUNTS = (18_000, 30_000)
-TRAINING_MODES = ("historical", "synthetic")
-CURRENT_EPSILON = 0.50
-CURRENT_EPSILON_DECAY = 0.999954
+MODEL_B_EPISODE_COUNTS = (8_000, 22_000, 42_000, 54_000)
 
 
 def main() -> None:
-    """Run or resume the exhaustive historical-versus-synthetic HPO comparison."""
+    """Run or resume the exhaustive Model B synthetic HPO comparison."""
     from backtesting.splitter import generate_walk_forward_splits
     from backtesting.walk_forward import run_walk_forward_q_learning
     from data.loaders import load_config
@@ -35,7 +32,11 @@ def main() -> None:
     dataset = pd.read_parquet(project_config["processed_dataset_path"])
     splits = generate_walk_forward_splits(dataset.index)
     source_experiment = Path(args.source_experiment)
-    search_space = _load_search_space(source_experiment / "config.yaml")
+    search_space = _load_search_space(
+        source_experiment / "config.yaml",
+        episode_counts=args.episodes,
+        training_modes=args.training_modes,
+    )
     trial_configs = _build_trial_configs(search_space)
     if args.dry_run:
         print(f"source={source_experiment} trials={len(trial_configs)}")
@@ -49,7 +50,7 @@ def main() -> None:
 
     if args.resume_dir is None:
         tracker = ExperimentTracker()
-        experiment_dir = tracker.create_experiment(prefix="hpo_mode_comparison")
+        experiment_dir = tracker.create_experiment(prefix=args.experiment_prefix)
         _write_experiment_config(
             experiment_dir=experiment_dir,
             source_experiment=source_experiment,
@@ -123,39 +124,54 @@ def _parse_args() -> argparse.Namespace:
     """Parse runner arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--source-experiment", default="analysis/hyperparameter_search/hpo_004"
+        "--source-experiment",
+        default="analysis/hyperparameter_search/hpo_mode_comparison_001",
     )
     parser.add_argument("--resume-dir")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--episodes",
+        nargs="+",
+        type=int,
+        default=list(MODEL_B_EPISODE_COUNTS),
+    )
+    parser.add_argument(
+        "--training-modes",
+        nargs="+",
+        choices=["historical", "synthetic"],
+        default=["synthetic"],
+    )
+    parser.add_argument("--experiment-prefix", default="hpo_model_b_synthetic")
     return parser.parse_args()
 
 
-def _load_search_space(config_path: Path) -> dict[str, list[float | int | str]]:
-    """Load the source HPO grid and append long episode counts."""
+def _load_search_space(
+    config_path: Path,
+    episode_counts: list[int],
+    training_modes: list[str],
+) -> dict[str, list[float | int | str]]:
+    """Load a reference grid while replacing training modes and episode counts."""
     payload = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     source_space = payload["search_space"]
-    episodes = sorted({*source_space["episodes"], *LONG_EPISODE_COUNTS})
     return {
-        "episodes": episodes,
+        "episodes": sorted(set(episode_counts)),
         "learning_rates": list(source_space["learning_rates"]),
         "learning_rate_schedules": list(source_space["learning_rate_schedules"]),
-        "epsilons": sorted({*source_space["epsilons"], CURRENT_EPSILON}),
-        "epsilon_decays": sorted(
-            {*source_space["epsilon_decays"], CURRENT_EPSILON_DECAY}
-        ),
+        "epsilons": list(source_space["epsilons"]),
+        "epsilon_decays": list(source_space["epsilon_decays"]),
         "state_precisions": list(source_space["state_precisions"]),
         "visit_learning_rate_decay": float(source_space["visit_learning_rate_decay"]),
         "discount_factor": 0.95,
         "min_epsilon": 0.02,
         "seed": 42,
-        "training_modes": list(TRAINING_MODES),
+        "training_modes": list(training_modes),
     }
 
 
 def _build_trial_configs(
     search_space: dict[str, list[float | int | str]],
 ) -> list[QLearningTrainingConfig]:
-    """Expand every requested HPO combination across both training modes."""
+    """Expand every requested Model B HPO combination."""
     from agents.training import QLearningTrainingConfig
 
     return [
@@ -207,7 +223,7 @@ def _write_experiment_config(
 ) -> None:
     """Write immutable runner metadata before the first long trial starts."""
     payload = {
-        "objective": "compare all hpo_004 configurations across training modes",
+        "objective": "Model B synthetic hyperparameter search",
         "source_experiment": str(source_experiment),
         "dataset": dataset_path,
         "feature_mode": "compact_regime",
@@ -215,8 +231,11 @@ def _write_experiment_config(
         "walk_forward_splits": split_count,
         "trial_count": trial_count,
         "notes": (
-            "The source grid is extended with 18000 and 30000 episodes. "
-            "Both historical and synthetic training are run for every combination. "
+            "The reference grid supplies learning and exploration settings. "
+            "Only the requested episode counts and training modes are run. "
+            "This experiment is Model B because compact_regime now excludes "
+            "the current portfolio from the learned state and evaluation uses "
+            "the cost-aware policy. "
             "Synthetic simulators fit only on their split's training window; "
             "walk-forward metrics remain historical test metrics."
         ),
@@ -233,7 +252,7 @@ def _build_summary(results: pd.DataFrame) -> str:
     best = results.iloc[0]
     return "\n".join(
         [
-            "# Full HPO Mode Comparison",
+            "# Model B Hyperparameter Search",
             "",
             f"Completed trials: {len(results)}",
             "",
