@@ -1,3 +1,3 @@
 method,signal_date,target_period,action_id,w_arg,w_ced,w_sp500,w_gold,q_value,score,score_name,state_source,nearest_state_distance,expected_turnover
 myopic_greedy_latest_return,2026-07-31,2026-08,0,1.0,0.0,0.0,0.0,0.0,0.061214390061752756,latest_observed_return_proxy,latest_observed_returns,0.0,0.75
-model_b_modal_market_policy,2026-07-31,2026-08,285,0.0,0.0,0.0,1.0,0.12765974747239242,1.0,modal_target_share,exact,0.0,0.75
+model_b_modal_market_policy,2026-07-31,2026-08,176,0.1,0.5,0.3,0.1,0.20651298912582847,1.0,modal_target_share,exact,0.0,0.3

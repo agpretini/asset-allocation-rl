@@ -11,4 +11,4 @@ use `../run.py` for the generic selected-model runner.
 - `forecast/`: dated full-data allocation predictions and model snapshots.
 
 These artifacts are retained for research comparison only. The selected
-production-style Model B run is `../model_b_synthetic_trial_076/`.
+production-style Model B run is `../model_b_synthetic_trial_169/`.

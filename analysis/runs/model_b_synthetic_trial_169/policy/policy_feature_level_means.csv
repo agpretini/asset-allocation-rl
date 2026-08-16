@@ -1,0 +1,53 @@
+feature,level,level_label,asset,mean_weight,state_count
+momentum_leader,0,ARG,w_arg,0.14814814814814814,27
+momentum_leader,0,ARG,w_ced,0.34074074074074073,27
+momentum_leader,0,ARG,w_sp500,0.26666666666666666,27
+momentum_leader,0,ARG,w_gold,0.24444444444444446,27
+momentum_leader,1,CEDEARs,w_arg,0.21481481481481482,27
+momentum_leader,1,CEDEARs,w_ced,0.27037037037037037,27
+momentum_leader,1,CEDEARs,w_sp500,0.22222222222222218,27
+momentum_leader,1,CEDEARs,w_gold,0.2925925925925926,27
+momentum_leader,2,S&P 500,w_arg,0.14814814814814814,27
+momentum_leader,2,S&P 500,w_ced,0.3148148148148148,27
+momentum_leader,2,S&P 500,w_sp500,0.2740740740740741,27
+momentum_leader,2,S&P 500,w_gold,0.262962962962963,27
+momentum_leader,3,Gold,w_arg,0.1814814814814815,27
+momentum_leader,3,Gold,w_ced,0.2925925925925926,27
+momentum_leader,3,Gold,w_sp500,0.25925925925925924,27
+momentum_leader,3,Gold,w_gold,0.26666666666666666,27
+momentum_strength,0,Low,w_arg,0.1888888888888889,36
+momentum_strength,0,Low,w_ced,0.2305555555555555,36
+momentum_strength,0,Low,w_sp500,0.2888888888888889,36
+momentum_strength,0,Low,w_gold,0.2916666666666667,36
+momentum_strength,1,Medium,w_arg,0.17222222222222225,36
+momentum_strength,1,Medium,w_ced,0.3277777777777777,36
+momentum_strength,1,Medium,w_sp500,0.22499999999999998,36
+momentum_strength,1,Medium,w_gold,0.275,36
+momentum_strength,2,High,w_arg,0.15833333333333335,36
+momentum_strength,2,High,w_ced,0.3555555555555555,36
+momentum_strength,2,High,w_sp500,0.25277777777777777,36
+momentum_strength,2,High,w_gold,0.23333333333333334,36
+usd_ars_regime,0,Low,w_arg,0.16944444444444443,36
+usd_ars_regime,0,Low,w_ced,0.31666666666666665,36
+usd_ars_regime,0,Low,w_sp500,0.2444444444444444,36
+usd_ars_regime,0,Low,w_gold,0.26944444444444443,36
+usd_ars_regime,1,Medium,w_arg,0.18055555555555555,36
+usd_ars_regime,1,Medium,w_ced,0.2555555555555555,36
+usd_ars_regime,1,Medium,w_sp500,0.25,36
+usd_ars_regime,1,Medium,w_gold,0.31388888888888883,36
+usd_ars_regime,2,High,w_arg,0.16944444444444445,36
+usd_ars_regime,2,High,w_ced,0.3416666666666667,36
+usd_ars_regime,2,High,w_sp500,0.2722222222222222,36
+usd_ars_regime,2,High,w_gold,0.21666666666666667,36
+vix_regime,0,Low,w_arg,0.13055555555555556,36
+vix_regime,0,Low,w_ced,0.34722222222222227,36
+vix_regime,0,Low,w_sp500,0.25555555555555554,36
+vix_regime,0,Low,w_gold,0.26666666666666666,36
+vix_regime,1,Medium,w_arg,0.20833333333333334,36
+vix_regime,1,Medium,w_ced,0.25,36
+vix_regime,1,Medium,w_sp500,0.2416666666666667,36
+vix_regime,1,Medium,w_gold,0.3,36
+vix_regime,2,High,w_arg,0.18055555555555555,36
+vix_regime,2,High,w_ced,0.3166666666666666,36
+vix_regime,2,High,w_sp500,0.2694444444444445,36
+vix_regime,2,High,w_gold,0.23333333333333334,36

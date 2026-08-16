@@ -23,3 +23,10 @@ For example:
 cat analysis/runs/<run_label>/status.json
 tail -f analysis/runs/<run_label>/run.log
 ```
+
+After full-data training, the runner also writes a finite-state
+partial-dependence-style policy-response package under `policy/`: level means,
+matched-context effects, an interpretation Markdown file, and an SVG profile
+chart. It is an exact summary of the discrete policy, not SHAP or a causal
+estimate. `render_policy_feature_effects.py` can regenerate that package from a
+saved policy table without retraining.

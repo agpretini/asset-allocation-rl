@@ -1,0 +1,20 @@
+2026-08-16T14:04:17.521623+00:00 [initialized] Selected-model production run initialized
+2026-08-16T14:04:17.521827+00:00 [walk_forward] Starting validation and test evaluation
+2026-08-16T14:04:17.521985+00:00 [split_started] Preparing data
+2026-08-16T14:04:17.522589+00:00 [validation_training] Training on train window for validation
+2026-08-16T14:27:54.985554+00:00 [validation_evaluation] Evaluating frozen policy on historical validation
+2026-08-16T14:27:55.003497+00:00 [test_training] Retraining on train plus validation for test
+2026-08-16T14:51:41.470981+00:00 [test_evaluation] Evaluating frozen policy on historical test
+2026-08-16T14:51:41.493083+00:00 [split_completed] Validation and test metrics completed
+2026-08-16T14:51:41.493442+00:00 [split_started] Preparing data
+2026-08-16T14:51:41.493668+00:00 [validation_training] Training on train window for validation
+2026-08-16T15:15:22.157923+00:00 [validation_evaluation] Evaluating frozen policy on historical validation
+2026-08-16T15:15:22.173836+00:00 [test_training] Retraining on train plus validation for test
+2026-08-16T15:39:10.896274+00:00 [test_evaluation] Evaluating frozen policy on historical test
+2026-08-16T15:39:10.917192+00:00 [split_completed] Validation and test metrics completed
+2026-08-16T15:39:10.922927+00:00 [comparisons] Writing baseline comparisons and charts
+2026-08-16T15:39:10.984588+00:00 [completed] Walk-forward-only run completed
+2026-08-16T15:43:47.920482+00:00 [initialized] Selected-model production run initialized
+2026-08-16T15:43:47.920811+00:00 [full_data_training] Training full-data model for forecast
+2026-08-16T16:08:00.569740+00:00 [policy_artifacts] Writing policy and visit-coverage artifacts
+2026-08-16T16:08:04.815784+00:00 [completed] Selected-model production run completed

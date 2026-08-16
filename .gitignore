@@ -40,11 +40,12 @@ analysis/runs/**/forecast/*
 analysis/runs/**/run.log
 analysis/runs/**/status.json
 analysis/runs/**/policy/*.md
+analysis/runs/**/RESULTS.md
 !analysis/runs/**/README.md
-!analysis/runs/model_b_synthetic_trial_076/
-!analysis/runs/model_b_synthetic_trial_076/**
+!analysis/runs/model_b_synthetic_trial_169/
+!analysis/runs/model_b_synthetic_trial_169/**
 
 # Selected-run provenance is represented by configuration and prediction
 # metadata; the full Q-table and per-episode history are too large to version.
-analysis/runs/model_b_synthetic_trial_076/forecast/**/trained_model.json
-analysis/runs/model_b_synthetic_trial_076/forecast/**/training_history.csv
+analysis/runs/model_b_synthetic_trial_169/forecast/**/trained_model.json
+analysis/runs/model_b_synthetic_trial_169/forecast/**/training_history.csv

@@ -18,6 +18,6 @@ compared in tests.
 `artifacts.py` additionally writes dependency-free SVG cumulative-value charts.
 The selected Model B workflow writes one chart and one metrics table per test
 split under `analysis/runs/<run_label>/comparison/` (currently
-`analysis/runs/model_b_synthetic_trial_076/comparison/`).
+`analysis/runs/model_b_synthetic_trial_169/comparison/`).
 Test windows overlap, so they are intentionally not stitched into a single
 time series or pooled cumulative return.

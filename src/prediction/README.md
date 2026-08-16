@@ -37,8 +37,8 @@ analysis/hyperparameter_search/current/best_hyperparameters.yaml
 That file supplies `episodes`, `training_mode` (`historical` or `synthetic`),
 seed, learning rate and schedule, discount factor, epsilon schedule, and state
 precision. The current product configuration is the selected Model B setup from
-trial 76: 22,000 synthetic episodes, seed 42, constant learning rate 0.10,
-discount factor 0.95, epsilon 0.30 decaying to 0.02, and `compact_regime`.
+trial 169: 54,000 synthetic episodes, seed 42, constant learning rate 0.05,
+discount factor 0.95, epsilon 0.50 decaying to 0.02, and `compact_regime`.
 Its initial HPO ranking predated the corrected cost-aware evaluator; the
 committed selected-model run records the corrected-policy evaluation and the
 fixed configuration remains fully reproducible.

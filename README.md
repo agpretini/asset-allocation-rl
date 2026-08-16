@@ -37,9 +37,10 @@ caffeinate -i uv run python analysis/runs/run.py
 
 It derives its destination from `run_label` in the selected-model YAML and
 writes validation, test, policy, and forecast artifacts together. The current
-selected run is `analysis/runs/model_b_synthetic_trial_076/`. Its August 2026
-strategic Model B signal, from the July 2026 close, is 100% Gold; see its dated
-forecast directory for the full decision record and assumptions.
+selected run is `analysis/runs/model_b_synthetic_trial_169/`. Its August 2026
+strategic Model B signal, from the July 2026 close, is 10% Argentine equities,
+50% CEDEARs, 30% S&P 500, and 10% Gold; see its dated forecast directory for
+the full decision record and assumptions.
 
 ## How the Model Works
 
@@ -94,4 +95,3 @@ Validation remains a frozen-policy backtest on real validation observations;
 test retrains from scratch on train plus validation and is evaluated only on
 real test observations. The full-data forecast follows the same rule: it fits
 the simulator only on data available at the signal date.
-

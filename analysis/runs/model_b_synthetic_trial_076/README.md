@@ -1,6 +1,6 @@
-# Model B Synthetic Trial 076 (Selected Product Model)
+# Model B Synthetic Trial 076 (Superseded Evaluation)
 
-This directory contains the complete production-style analysis for trial 76
+This directory contains the superseded production-style evaluation for trial 76
 from `analysis/hyperparameter_search/hpo_model_b_synthetic_001`.
 
 The fixed configuration is 22,000 synthetic episodes, constant learning rate
@@ -38,8 +38,7 @@ directory's root. They show the live stage and split as the four walk-forward
 training/evaluation phases progress. They cannot be added retrospectively to a
 process that was already running when this feature was introduced.
 
-Trial 76 is the selected product configuration. Its completed HPO ranking was
-calculated before the cost-aware Model B evaluator was fixed; this committed
-production analysis uses the corrected cost-aware policy. It is therefore the
-authoritative record for this selected configuration, not an untouched final
-holdout claim.
+Trial 76 was the first selected Model B product evaluation. It was superseded
+by trial 169 after the latter was evaluated with the corrected cost-aware policy
+and showed stronger historical test performance. Its artifacts remain a
+reproducible research comparison, not the active product record.

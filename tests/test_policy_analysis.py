@@ -1,9 +1,15 @@
 """Tests for compact-regime policy inspection artifacts."""
 
+from itertools import product
+
+import pandas as pd
+import pytest
+
 from agents.q_learning import QLearningAgent
 from analysis.policy import (
     build_compact_policy_table,
     build_fixed_market_policy_table,
+    build_policy_feature_effects,
     build_reference_regime_policy,
     build_state_visit_summary,
 )
@@ -51,3 +57,32 @@ def test_fixed_market_policy_includes_actual_and_grid_starting_allocations() -> 
     assert len(policy) == 287
     assert policy.iloc[0]["starting_portfolio_type"] == "prediction_assumption"
     assert {"state_total_visits", "target_sp500"}.issubset(policy.columns)
+
+
+def test_policy_feature_effects_match_other_contexts() -> None:
+    rows = []
+    for leader, strength, usd, vix in product(range(4), range(3), range(3), range(3)):
+        rows.append(
+            {
+                "momentum_leader": leader,
+                "momentum_strength": strength,
+                "usd_ars_regime": usd,
+                "vix_regime": vix,
+                "w_arg": 0.1,
+                "w_ced": 0.2,
+                "w_sp500": 0.3,
+                "w_gold": 0.4 + 0.1 * vix,
+            }
+        )
+
+    _, effects = build_policy_feature_effects(pd.DataFrame(rows))
+
+    vix_gold = effects.loc[
+        (effects["feature"] == "vix_regime")
+        & (effects["from_level"] == 0)
+        & (effects["to_level"] == 2)
+        & (effects["asset"] == "w_gold")
+    ].iloc[0]
+    assert vix_gold["context_count"] == 36
+    assert vix_gold["mean_change_percentage_points"] == pytest.approx(20.0)
+    assert vix_gold["positive_context_share"] == 1.0

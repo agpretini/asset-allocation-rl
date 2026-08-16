@@ -25,9 +25,12 @@ def main() -> None:
     from analysis.policy import (
         build_compact_policy_table,
         build_fixed_market_policy_table,
+        build_policy_feature_effects,
+        build_policy_feature_effects_markdown,
         build_reference_regime_policy,
         build_state_visit_summary,
         write_fixed_market_policy_svg,
+        write_policy_feature_effects_svg,
         write_reference_policy_svg,
     )
     from backtesting.benchmarks import run_benchmarks
@@ -50,6 +53,10 @@ def main() -> None:
 
     global RUN_DIR
     args = _parse_args()
+    if args.skip_full_training and args.forecast_only:
+        raise ValueError(
+            "--skip-full-training and --forecast-only are mutually exclusive"
+        )
     config_payload = _load_selected_config(Path(args.config))
     run_label = str(config_payload.pop("run_label", "selected_model"))
     RUN_DIR = Path(args.output_dir or Path("analysis/runs") / run_label)
@@ -100,11 +107,14 @@ def main() -> None:
             agent=agent,
             analysis_dir=analysis_dir,
             build_compact_policy_table=build_compact_policy_table,
+            build_policy_feature_effects=build_policy_feature_effects,
+            build_policy_feature_effects_markdown=build_policy_feature_effects_markdown,
             build_state_visit_summary=build_state_visit_summary,
             build_reference_regime_policy=build_reference_regime_policy,
             write_reference_policy_svg=write_reference_policy_svg,
             build_fixed_market_policy_table=build_fixed_market_policy_table,
             write_fixed_market_policy_svg=write_fixed_market_policy_svg,
+            write_policy_feature_effects_svg=write_policy_feature_effects_svg,
             market_state=market_state,
             actual_starting_weights=[0.25, 0.25, 0.25, 0.25],
             signal_date=f"{dataset.index[-1]:%Y-%m-%d}",
@@ -132,36 +142,37 @@ def main() -> None:
         reporter.complete("Baseline comparisons refreshed")
         return
 
-    print("Running walk-forward validation and test evaluation…", flush=True)
-    reporter.update("walk_forward", "Starting validation and test evaluation")
-    report, model_paths = run_walk_forward_train_validation_test(
-        dataset=dataset,
-        splits=splits,
-        training_config=training_config,
-        feature_mode=feature_mode,
-        progress_callback=reporter.walk_forward_event,
-    )
-    report.to_csv(
-        walk_forward_dir / "walk_forward_train_validation_test.csv", index=False
-    )
-    report.to_csv(comparison_dir / "walk_forward_model_metrics.csv", index=False)
-    reporter.update("comparisons", "Writing baseline comparisons and charts")
-    _write_comparisons(
-        dataset=dataset,
-        splits=splits,
-        model_paths=model_paths,
-        comparison_dir=comparison_dir,
-        run_benchmarks=run_benchmarks,
-        run_weight_strategy_backtest=run_weight_strategy_backtest,
-        strategies={
-            "equal_weight": equal_weight_strategy,
-            "momentum": momentum_strategy,
-            "inverse_volatility": volatility_weighted_strategy,
-        },
-        build_performance_report=build_performance_report,
-        build_normalized_value_paths=build_normalized_value_paths,
-        write_cumulative_return_svg=write_cumulative_return_svg,
-    )
+    if not args.forecast_only:
+        print("Running walk-forward validation and test evaluation…", flush=True)
+        reporter.update("walk_forward", "Starting validation and test evaluation")
+        report, model_paths = run_walk_forward_train_validation_test(
+            dataset=dataset,
+            splits=splits,
+            training_config=training_config,
+            feature_mode=feature_mode,
+            progress_callback=reporter.walk_forward_event,
+        )
+        report.to_csv(
+            walk_forward_dir / "walk_forward_train_validation_test.csv", index=False
+        )
+        report.to_csv(comparison_dir / "walk_forward_model_metrics.csv", index=False)
+        reporter.update("comparisons", "Writing baseline comparisons and charts")
+        _write_comparisons(
+            dataset=dataset,
+            splits=splits,
+            model_paths=model_paths,
+            comparison_dir=comparison_dir,
+            run_benchmarks=run_benchmarks,
+            run_weight_strategy_backtest=run_weight_strategy_backtest,
+            strategies={
+                "equal_weight": equal_weight_strategy,
+                "momentum": momentum_strategy,
+                "inverse_volatility": volatility_weighted_strategy,
+            },
+            build_performance_report=build_performance_report,
+            build_normalized_value_paths=build_normalized_value_paths,
+            write_cumulative_return_svg=write_cumulative_return_svg,
+        )
 
     if args.skip_full_training:
         _write_metadata(
@@ -200,11 +211,14 @@ def main() -> None:
         agent=agent,
         analysis_dir=analysis_dir,
         build_compact_policy_table=build_compact_policy_table,
+        build_policy_feature_effects=build_policy_feature_effects,
+        build_policy_feature_effects_markdown=build_policy_feature_effects_markdown,
         build_state_visit_summary=build_state_visit_summary,
         build_reference_regime_policy=build_reference_regime_policy,
         write_reference_policy_svg=write_reference_policy_svg,
         build_fixed_market_policy_table=build_fixed_market_policy_table,
         write_fixed_market_policy_svg=write_fixed_market_policy_svg,
+        write_policy_feature_effects_svg=write_policy_feature_effects_svg,
         market_state=StateBuilder(dataset, feature_mode=feature_mode).build_state(
             len(dataset) - 1,
             PortfolioContext(weights=[0.25, 0.25, 0.25, 0.25]),
@@ -393,6 +407,19 @@ def _write_policy_artifacts(**kwargs: object) -> None:
     state_visits.to_csv(analysis_dir / "state_visit_summary.csv", index=False)
     policy = kwargs["build_compact_policy_table"](agent)
     policy.to_csv(analysis_dir / "compact_policy_all_states.csv", index=False)
+    level_means, matched_effects = kwargs["build_policy_feature_effects"](policy)
+    level_means.to_csv(analysis_dir / "policy_feature_level_means.csv", index=False)
+    matched_effects.to_csv(
+        analysis_dir / "policy_feature_matched_effects.csv", index=False
+    )
+    kwargs["write_policy_feature_effects_svg"](
+        level_means,
+        analysis_dir / "policy_feature_response_profiles.svg",
+    )
+    (analysis_dir / "policy_feature_effects.md").write_text(
+        kwargs["build_policy_feature_effects_markdown"](matched_effects),
+        encoding="utf-8",
+    )
     reference_policy = kwargs["build_reference_regime_policy"](policy)
     reference_policy.to_csv(
         analysis_dir / "compact_policy_balanced_reference.csv", index=False
@@ -475,6 +502,11 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--target-period", default="2026-08")
     parser.add_argument("--skip-full-training", action="store_true")
+    parser.add_argument(
+        "--forecast-only",
+        action="store_true",
+        help="Reuse existing walk-forward artifacts and train only the full-data forecast.",
+    )
     parser.add_argument("--refresh-comparisons", action="store_true")
     parser.add_argument("--refresh-policy-analysis", action="store_true")
     return parser.parse_args()

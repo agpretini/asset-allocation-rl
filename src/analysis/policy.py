@@ -18,6 +18,12 @@ ASSET_COLUMNS = ("w_arg", "w_ced", "w_sp500", "w_gold")
 ASSET_LABELS = ("Argentine equities", "CEDEARs", "S&P 500", "Gold")
 LEADER_LABELS = ("ARG", "CEDEARs", "S&P 500", "Gold")
 REGIME_LABELS = ("Low", "Medium", "High")
+POLICY_FEATURES = (
+    "momentum_leader",
+    "momentum_strength",
+    "usd_ars_regime",
+    "vix_regime",
+)
 
 
 def build_compact_policy_table(agent: QLearningAgent) -> pd.DataFrame:
@@ -370,6 +376,213 @@ def _modal_cost_aware_action(
         if int(count) == max_count
     )
     return action_id, max_count / len(action_space)
+
+
+def build_policy_feature_effects(
+    policy_table: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Summarize exact, matched-context responses of a discrete policy.
+
+    The first table contains one average allocation per feature level. The
+    second holds matched changes between adjacent ordered levels, or every
+    pair of momentum leaders. These are policy-response summaries, not causal
+    effects or SHAP values.
+    """
+    required_columns = {*POLICY_FEATURES, *ASSET_COLUMNS}
+    if not required_columns.issubset(policy_table.columns):
+        missing = sorted(required_columns.difference(policy_table.columns))
+        raise ValueError(f"policy table is missing columns: {missing}")
+
+    level_rows: list[dict[str, object]] = []
+    change_rows: list[dict[str, object]] = []
+    for feature in POLICY_FEATURES:
+        levels = range(4) if feature == "momentum_leader" else range(3)
+        other_features = [name for name in POLICY_FEATURES if name != feature]
+        for level in levels:
+            means = policy_table.loc[
+                policy_table[feature] == level, list(ASSET_COLUMNS)
+            ].mean()
+            for asset, mean_weight in means.items():
+                level_rows.append(
+                    {
+                        "feature": feature,
+                        "level": level,
+                        "level_label": _feature_level_label(feature, level),
+                        "asset": asset,
+                        "mean_weight": float(mean_weight),
+                        "state_count": int((policy_table[feature] == level).sum()),
+                    }
+                )
+
+        comparisons = (
+            [(level, level + 1) for level in range(3)]
+            if feature == "momentum_leader"
+            else [(0, 1), (1, 2), (0, 2)]
+        )
+        for from_level, to_level in comparisons:
+            left = policy_table.loc[
+                policy_table[feature] == from_level,
+                [*other_features, *ASSET_COLUMNS],
+            ].set_index(other_features)
+            right = policy_table.loc[
+                policy_table[feature] == to_level,
+                [*other_features, *ASSET_COLUMNS],
+            ].set_index(other_features)
+            aligned_left, aligned_right = left.align(right, join="inner", axis=0)
+            for asset in ASSET_COLUMNS:
+                changes = aligned_right[asset] - aligned_left[asset]
+                level_from = float(aligned_left[asset].mean())
+                level_to = float(aligned_right[asset].mean())
+                change_rows.append(
+                    {
+                        "feature": feature,
+                        "from_level": from_level,
+                        "from_label": _feature_level_label(feature, from_level),
+                        "to_level": to_level,
+                        "to_label": _feature_level_label(feature, to_level),
+                        "asset": asset,
+                        "context_count": len(changes),
+                        "mean_weight_from": level_from,
+                        "mean_weight_to": level_to,
+                        "mean_change": float(changes.mean()),
+                        "mean_change_percentage_points": float(changes.mean() * 100),
+                        "median_change_percentage_points": float(
+                            changes.median() * 100
+                        ),
+                        "positive_context_share": float((changes > 0).mean()),
+                        "negative_context_share": float((changes < 0).mean()),
+                        "unchanged_context_share": float((changes == 0).mean()),
+                    }
+                )
+    return pd.DataFrame(level_rows), pd.DataFrame(change_rows)
+
+
+def build_policy_feature_effects_markdown(effects: pd.DataFrame) -> str:
+    """Write a concise interpretation of matched discrete policy responses."""
+    ordered = effects.loc[
+        effects["feature"].isin(["momentum_strength", "usd_ars_regime", "vix_regime"])
+        & (effects["from_level"] == 0)
+        & (effects["to_level"] == 2)
+    ].copy()
+    lines = [
+        "# Matched-Context Policy Responses",
+        "",
+        "This is a finite-state partial-dependence-style analysis, not SHAP and not a causal estimate. For each comparison, the other three market variables are held fixed across every compatible discrete context; the reported change is the average change in selected target weight.",
+        "",
+        "## Low-to-High Matched Responses",
+        "",
+        "| Feature | Asset | Average target-weight change | Contexts with same sign |",
+        "| --- | --- | ---: | ---: |",
+    ]
+    for _, row in ordered.iterrows():
+        same_sign = max(
+            float(row["positive_context_share"]),
+            float(row["negative_context_share"]),
+        )
+        lines.append(
+            f"| {row['feature']} | {row['asset']} | "
+            f"{float(row['mean_change_percentage_points']):+.1f} pp | "
+            f"{same_sign:.0%} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Reading the Tables",
+            "",
+            "- `policy_feature_level_means.csv` shows the average target allocation at each feature level.",
+            "- `policy_feature_matched_effects.csv` gives every pairwise comparison, the number of fixed contexts, average/median percentage-point change, and the share of contexts where the direction is positive, negative, or unchanged.",
+            "- Momentum leader is categorical, so its comparisons are leader-to-leader changes rather than a low-to-high gradient.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def write_policy_feature_effects_svg(
+    level_means: pd.DataFrame,
+    destination: Path,
+    title: str = "Policy response profiles by market feature",
+) -> None:
+    """Render finite-state partial-dependence-style policy profiles as SVG."""
+    width, height = 1400, 760
+    panels = (
+        ("momentum_leader", "Momentum leader"),
+        ("momentum_strength", "Momentum strength"),
+        ("usd_ars_regime", "USD/ARS monthly change"),
+        ("vix_regime", "VIX regime"),
+    )
+    positions = ((45, 95), (730, 95), (45, 430), (730, 430))
+    colors = ("#2563eb", "#dc2626", "#16a34a", "#ca8a04")
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" fill="white"/>',
+        f'<text x="700" y="35" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold">{escape(title)}</text>',
+        '<text x="700" y="60" text-anchor="middle" font-family="sans-serif" font-size="13">Each point averages the selected target weight over all other discrete market states. These are policy responses, not causal effects.</text>',
+    ]
+    for (feature, panel_title), (x, y) in zip(panels, positions, strict=True):
+        subset = level_means.loc[level_means["feature"] == feature]
+        levels = sorted(subset["level"].unique())
+        panel_width, panel_height = 620, 250
+        left, top, right, bottom = 62, 38, 30, 48
+        plot_width = panel_width - left - right
+        plot_height = panel_height - top - bottom
+        parts.extend(
+            [
+                f'<rect x="{x}" y="{y}" width="{panel_width}" height="{panel_height}" fill="#fff" stroke="#9ca3af"/>',
+                f'<text x="{x + panel_width / 2}" y="{y + 23}" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">{escape(panel_title)}</text>',
+            ]
+        )
+        for tick in range(0, 101, 25):
+            tick_y = y + top + plot_height * (1 - tick / 100)
+            parts.extend(
+                [
+                    f'<line x1="{x + left}" y1="{tick_y:.1f}" x2="{x + left + plot_width}" y2="{tick_y:.1f}" stroke="#e5e7eb"/>',
+                    f'<text x="{x + left - 8}" y="{tick_y + 4:.1f}" text-anchor="end" font-family="sans-serif" font-size="10">{tick}%</text>',
+                ]
+            )
+        for index, level in enumerate(levels):
+            label = subset.loc[subset["level"] == level, "level_label"].iloc[0]
+            point_x = x + left + plot_width * index / max(len(levels) - 1, 1)
+            parts.append(
+                f'<text x="{point_x:.1f}" y="{y + top + plot_height + 22}" text-anchor="middle" font-family="sans-serif" font-size="11">{escape(str(label))}</text>'
+            )
+        for asset, label, color in zip(
+            ASSET_COLUMNS, ASSET_LABELS, colors, strict=True
+        ):
+            values = subset.loc[subset["asset"] == asset].sort_values("level")
+            points = []
+            for index, (_, row) in enumerate(values.iterrows()):
+                point_x = x + left + plot_width * index / max(len(levels) - 1, 1)
+                point_y = y + top + plot_height * (1 - float(row["mean_weight"]))
+                points.append((point_x, point_y))
+            parts.append(
+                '<polyline fill="none" stroke="{}" stroke-width="2.5" points="{}"/>'.format(
+                    color,
+                    " ".join(
+                        f"{point_x:.1f},{point_y:.1f}" for point_x, point_y in points
+                    ),
+                )
+            )
+            for point_x, point_y in points:
+                parts.append(
+                    f'<circle cx="{point_x:.1f}" cy="{point_y:.1f}" r="3.5" fill="{color}"/>'
+                )
+            legend_y = y + panel_height - 14
+            legend_x = x + 68 + list(ASSET_COLUMNS).index(asset) * 135
+            parts.extend(
+                [
+                    f'<line x1="{legend_x}" y1="{legend_y}" x2="{legend_x + 16}" y2="{legend_y}" stroke="{color}" stroke-width="3"/>',
+                    f'<text x="{legend_x + 21}" y="{legend_y + 4}" font-family="sans-serif" font-size="10">{escape(label)}</text>',
+                ]
+            )
+    parts.append("</svg>")
+    destination.write_text("\n".join(parts), encoding="utf-8")
+
+
+def _feature_level_label(feature: str, level: int) -> str:
+    """Return the display label for one compact-regime feature level."""
+    if feature == "momentum_leader":
+        return LEADER_LABELS[level]
+    return REGIME_LABELS[level]
 
 
 def write_fixed_market_policy_svg(

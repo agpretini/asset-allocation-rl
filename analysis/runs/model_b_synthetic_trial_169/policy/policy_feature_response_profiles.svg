@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+<rect width="100%" height="100%" fill="white"/>
+<text x="700" y="35" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold">Policy response profiles by market feature</text>
+<text x="700" y="60" text-anchor="middle" font-family="sans-serif" font-size="13">Each point averages the selected target weight over all other discrete market states. These are policy responses, not causal effects.</text>
+<rect x="45" y="95" width="620" height="250" fill="#fff" stroke="#9ca3af"/>
+<text x="355.0" y="118" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">Momentum leader</text>
+<line x1="107" y1="297.0" x2="635" y2="297.0" stroke="#e5e7eb"/>
+<text x="99" y="301.0" text-anchor="end" font-family="sans-serif" font-size="10">0%</text>
+<line x1="107" y1="256.0" x2="635" y2="256.0" stroke="#e5e7eb"/>
+<text x="99" y="260.0" text-anchor="end" font-family="sans-serif" font-size="10">25%</text>
+<line x1="107" y1="215.0" x2="635" y2="215.0" stroke="#e5e7eb"/>
+<text x="99" y="219.0" text-anchor="end" font-family="sans-serif" font-size="10">50%</text>
+<line x1="107" y1="174.0" x2="635" y2="174.0" stroke="#e5e7eb"/>
+<text x="99" y="178.0" text-anchor="end" font-family="sans-serif" font-size="10">75%</text>
+<line x1="107" y1="133.0" x2="635" y2="133.0" stroke="#e5e7eb"/>
+<text x="99" y="137.0" text-anchor="end" font-family="sans-serif" font-size="10">100%</text>
+<text x="107.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">ARG</text>
+<text x="283.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">CEDEARs</text>
+<text x="459.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">S&amp;P 500</text>
+<text x="635.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">Gold</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="107.0,272.7 283.0,261.8 459.0,272.7 635.0,267.2"/>
+<circle cx="107.0" cy="272.7" r="3.5" fill="#2563eb"/>
+<circle cx="283.0" cy="261.8" r="3.5" fill="#2563eb"/>
+<circle cx="459.0" cy="272.7" r="3.5" fill="#2563eb"/>
+<circle cx="635.0" cy="267.2" r="3.5" fill="#2563eb"/>
+<line x1="113" y1="331" x2="129" y2="331" stroke="#2563eb" stroke-width="3"/>
+<text x="134" y="335" font-family="sans-serif" font-size="10">Argentine equities</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="107.0,241.1 283.0,252.7 459.0,245.4 635.0,249.0"/>
+<circle cx="107.0" cy="241.1" r="3.5" fill="#dc2626"/>
+<circle cx="283.0" cy="252.7" r="3.5" fill="#dc2626"/>
+<circle cx="459.0" cy="245.4" r="3.5" fill="#dc2626"/>
+<circle cx="635.0" cy="249.0" r="3.5" fill="#dc2626"/>
+<line x1="248" y1="331" x2="264" y2="331" stroke="#dc2626" stroke-width="3"/>
+<text x="269" y="335" font-family="sans-serif" font-size="10">CEDEARs</text>
+<polyline fill="none" stroke="#16a34a" stroke-width="2.5" points="107.0,253.3 283.0,260.6 459.0,252.1 635.0,254.5"/>
+<circle cx="107.0" cy="253.3" r="3.5" fill="#16a34a"/>
+<circle cx="283.0" cy="260.6" r="3.5" fill="#16a34a"/>
+<circle cx="459.0" cy="252.1" r="3.5" fill="#16a34a"/>
+<circle cx="635.0" cy="254.5" r="3.5" fill="#16a34a"/>
+<line x1="383" y1="331" x2="399" y2="331" stroke="#16a34a" stroke-width="3"/>
+<text x="404" y="335" font-family="sans-serif" font-size="10">S&amp;P 500</text>
+<polyline fill="none" stroke="#ca8a04" stroke-width="2.5" points="107.0,256.9 283.0,249.0 459.0,253.9 635.0,253.3"/>
+<circle cx="107.0" cy="256.9" r="3.5" fill="#ca8a04"/>
+<circle cx="283.0" cy="249.0" r="3.5" fill="#ca8a04"/>
+<circle cx="459.0" cy="253.9" r="3.5" fill="#ca8a04"/>
+<circle cx="635.0" cy="253.3" r="3.5" fill="#ca8a04"/>
+<line x1="518" y1="331" x2="534" y2="331" stroke="#ca8a04" stroke-width="3"/>
+<text x="539" y="335" font-family="sans-serif" font-size="10">Gold</text>
+<rect x="730" y="95" width="620" height="250" fill="#fff" stroke="#9ca3af"/>
+<text x="1040.0" y="118" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">Momentum strength</text>
+<line x1="792" y1="297.0" x2="1320" y2="297.0" stroke="#e5e7eb"/>
+<text x="784" y="301.0" text-anchor="end" font-family="sans-serif" font-size="10">0%</text>
+<line x1="792" y1="256.0" x2="1320" y2="256.0" stroke="#e5e7eb"/>
+<text x="784" y="260.0" text-anchor="end" font-family="sans-serif" font-size="10">25%</text>
+<line x1="792" y1="215.0" x2="1320" y2="215.0" stroke="#e5e7eb"/>
+<text x="784" y="219.0" text-anchor="end" font-family="sans-serif" font-size="10">50%</text>
+<line x1="792" y1="174.0" x2="1320" y2="174.0" stroke="#e5e7eb"/>
+<text x="784" y="178.0" text-anchor="end" font-family="sans-serif" font-size="10">75%</text>
+<line x1="792" y1="133.0" x2="1320" y2="133.0" stroke="#e5e7eb"/>
+<text x="784" y="137.0" text-anchor="end" font-family="sans-serif" font-size="10">100%</text>
+<text x="792.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">Low</text>
+<text x="1056.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">Medium</text>
+<text x="1320.0" y="319" text-anchor="middle" font-family="sans-serif" font-size="11">High</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="792.0,266.0 1056.0,268.8 1320.0,271.0"/>
+<circle cx="792.0" cy="266.0" r="3.5" fill="#2563eb"/>
+<circle cx="1056.0" cy="268.8" r="3.5" fill="#2563eb"/>
+<circle cx="1320.0" cy="271.0" r="3.5" fill="#2563eb"/>
+<line x1="798" y1="331" x2="814" y2="331" stroke="#2563eb" stroke-width="3"/>
+<text x="819" y="335" font-family="sans-serif" font-size="10">Argentine equities</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="792.0,259.2 1056.0,243.2 1320.0,238.7"/>
+<circle cx="792.0" cy="259.2" r="3.5" fill="#dc2626"/>
+<circle cx="1056.0" cy="243.2" r="3.5" fill="#dc2626"/>
+<circle cx="1320.0" cy="238.7" r="3.5" fill="#dc2626"/>
+<line x1="933" y1="331" x2="949" y2="331" stroke="#dc2626" stroke-width="3"/>
+<text x="954" y="335" font-family="sans-serif" font-size="10">CEDEARs</text>
+<polyline fill="none" stroke="#16a34a" stroke-width="2.5" points="792.0,249.6 1056.0,260.1 1320.0,255.5"/>
+<circle cx="792.0" cy="249.6" r="3.5" fill="#16a34a"/>
+<circle cx="1056.0" cy="260.1" r="3.5" fill="#16a34a"/>
+<circle cx="1320.0" cy="255.5" r="3.5" fill="#16a34a"/>
+<line x1="1068" y1="331" x2="1084" y2="331" stroke="#16a34a" stroke-width="3"/>
+<text x="1089" y="335" font-family="sans-serif" font-size="10">S&amp;P 500</text>
+<polyline fill="none" stroke="#ca8a04" stroke-width="2.5" points="792.0,249.2 1056.0,251.9 1320.0,258.7"/>
+<circle cx="792.0" cy="249.2" r="3.5" fill="#ca8a04"/>
+<circle cx="1056.0" cy="251.9" r="3.5" fill="#ca8a04"/>
+<circle cx="1320.0" cy="258.7" r="3.5" fill="#ca8a04"/>
+<line x1="1203" y1="331" x2="1219" y2="331" stroke="#ca8a04" stroke-width="3"/>
+<text x="1224" y="335" font-family="sans-serif" font-size="10">Gold</text>
+<rect x="45" y="430" width="620" height="250" fill="#fff" stroke="#9ca3af"/>
+<text x="355.0" y="453" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">USD/ARS monthly change</text>
+<line x1="107" y1="632.0" x2="635" y2="632.0" stroke="#e5e7eb"/>
+<text x="99" y="636.0" text-anchor="end" font-family="sans-serif" font-size="10">0%</text>
+<line x1="107" y1="591.0" x2="635" y2="591.0" stroke="#e5e7eb"/>
+<text x="99" y="595.0" text-anchor="end" font-family="sans-serif" font-size="10">25%</text>
+<line x1="107" y1="550.0" x2="635" y2="550.0" stroke="#e5e7eb"/>
+<text x="99" y="554.0" text-anchor="end" font-family="sans-serif" font-size="10">50%</text>
+<line x1="107" y1="509.0" x2="635" y2="509.0" stroke="#e5e7eb"/>
+<text x="99" y="513.0" text-anchor="end" font-family="sans-serif" font-size="10">75%</text>
+<line x1="107" y1="468.0" x2="635" y2="468.0" stroke="#e5e7eb"/>
+<text x="99" y="472.0" text-anchor="end" font-family="sans-serif" font-size="10">100%</text>
+<text x="107.0" y="654" text-anchor="middle" font-family="sans-serif" font-size="11">Low</text>
+<text x="371.0" y="654" text-anchor="middle" font-family="sans-serif" font-size="11">Medium</text>
+<text x="635.0" y="654" text-anchor="middle" font-family="sans-serif" font-size="11">High</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="107.0,604.2 371.0,602.4 635.0,604.2"/>
+<circle cx="107.0" cy="604.2" r="3.5" fill="#2563eb"/>
+<circle cx="371.0" cy="602.4" r="3.5" fill="#2563eb"/>
+<circle cx="635.0" cy="604.2" r="3.5" fill="#2563eb"/>
+<line x1="113" y1="666" x2="129" y2="666" stroke="#2563eb" stroke-width="3"/>
+<text x="134" y="670" font-family="sans-serif" font-size="10">Argentine equities</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="107.0,580.1 371.0,590.1 635.0,576.0"/>
+<circle cx="107.0" cy="580.1" r="3.5" fill="#dc2626"/>
+<circle cx="371.0" cy="590.1" r="3.5" fill="#dc2626"/>
+<circle cx="635.0" cy="576.0" r="3.5" fill="#dc2626"/>
+<line x1="248" y1="666" x2="264" y2="666" stroke="#dc2626" stroke-width="3"/>
+<text x="269" y="670" font-family="sans-serif" font-size="10">CEDEARs</text>
+<polyline fill="none" stroke="#16a34a" stroke-width="2.5" points="107.0,591.9 371.0,591.0 635.0,587.4"/>
+<circle cx="107.0" cy="591.9" r="3.5" fill="#16a34a"/>
+<circle cx="371.0" cy="591.0" r="3.5" fill="#16a34a"/>
+<circle cx="635.0" cy="587.4" r="3.5" fill="#16a34a"/>
+<line x1="383" y1="666" x2="399" y2="666" stroke="#16a34a" stroke-width="3"/>
+<text x="404" y="670" font-family="sans-serif" font-size="10">S&amp;P 500</text>
+<polyline fill="none" stroke="#ca8a04" stroke-width="2.5" points="107.0,587.8 371.0,580.5 635.0,596.5"/>
+<circle cx="107.0" cy="587.8" r="3.5" fill="#ca8a04"/>
+<circle cx="371.0" cy="580.5" r="3.5" fill="#ca8a04"/>
+<circle cx="635.0" cy="596.5" r="3.5" fill="#ca8a04"/>
+<line x1="518" y1="666" x2="534" y2="666" stroke="#ca8a04" stroke-width="3"/>
+<text x="539" y="670" font-family="sans-serif" font-size="10">Gold</text>
+<rect x="730" y="430" width="620" height="250" fill="#fff" stroke="#9ca3af"/>
+<text x="1040.0" y="453" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="bold">VIX regime</text>
+<line x1="792" y1="632.0" x2="1320" y2="632.0" stroke="#e5e7eb"/>
+<text x="784" y="636.0" text-anchor="end" font-family="sans-serif" font-size="10">0%</text>
+<line x1="792" y1="591.0" x2="1320" y2="591.0" stroke="#e5e7eb"/>
+<text x="784" y="595.0" text-anchor="end" font-family="sans-serif" font-size="10">25%</text>
+<line x1="792" y1="550.0" x2="1320" y2="550.0" stroke="#e5e7eb"/>
+<text x="784" y="554.0" text-anchor="end" font-family="sans-serif" font-size="10">50%</text>
+<line x1="792" y1="509.0" x2="1320" y2="509.0" stroke="#e5e7eb"/>
+<text x="784" y="513.0" text-anchor="end" font-family="sans-serif" font-size="10">75%</text>
+<line x1="792" y1="468.0" x2="1320" y2="468.0" stroke="#e5e7eb"/>
+<text x="784" y="472.0" text-anchor="end" font-family="sans-serif" font-size="10">100%</text>
+<text x="792.0" y="654" text-anchor="middle" font-family="sans-serif" font-size="11">Low</text>
+<text x="1056.0" y="654" text-anchor="middle" font-family="sans-serif" font-size="11">Medium</text>
+<text x="1320.0" y="654" text-anchor="middle" font-family="sans-serif" font-size="11">High</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="792.0,610.6 1056.0,597.8 1320.0,602.4"/>
+<circle cx="792.0" cy="610.6" r="3.5" fill="#2563eb"/>
+<circle cx="1056.0" cy="597.8" r="3.5" fill="#2563eb"/>
+<circle cx="1320.0" cy="602.4" r="3.5" fill="#2563eb"/>
+<line x1="798" y1="666" x2="814" y2="666" stroke="#2563eb" stroke-width="3"/>
+<text x="819" y="670" font-family="sans-serif" font-size="10">Argentine equities</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="792.0,575.1 1056.0,591.0 1320.0,580.1"/>
+<circle cx="792.0" cy="575.1" r="3.5" fill="#dc2626"/>
+<circle cx="1056.0" cy="591.0" r="3.5" fill="#dc2626"/>
+<circle cx="1320.0" cy="580.1" r="3.5" fill="#dc2626"/>
+<line x1="933" y1="666" x2="949" y2="666" stroke="#dc2626" stroke-width="3"/>
+<text x="954" y="670" font-family="sans-serif" font-size="10">CEDEARs</text>
+<polyline fill="none" stroke="#16a34a" stroke-width="2.5" points="792.0,590.1 1056.0,592.4 1320.0,587.8"/>
+<circle cx="792.0" cy="590.1" r="3.5" fill="#16a34a"/>
+<circle cx="1056.0" cy="592.4" r="3.5" fill="#16a34a"/>
+<circle cx="1320.0" cy="587.8" r="3.5" fill="#16a34a"/>
+<line x1="1068" y1="666" x2="1084" y2="666" stroke="#16a34a" stroke-width="3"/>
+<text x="1089" y="670" font-family="sans-serif" font-size="10">S&amp;P 500</text>
+<polyline fill="none" stroke="#ca8a04" stroke-width="2.5" points="792.0,588.3 1056.0,582.8 1320.0,593.7"/>
+<circle cx="792.0" cy="588.3" r="3.5" fill="#ca8a04"/>
+<circle cx="1056.0" cy="582.8" r="3.5" fill="#ca8a04"/>
+<circle cx="1320.0" cy="593.7" r="3.5" fill="#ca8a04"/>
+<line x1="1203" y1="666" x2="1219" y2="666" stroke="#ca8a04" stroke-width="3"/>
+<text x="1224" y="670" font-family="sans-serif" font-size="10">Gold</text>
+</svg>

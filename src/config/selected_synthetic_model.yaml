@@ -1,14 +1,14 @@
 # Selected Model B product configuration from hpo_model_b_synthetic_001,
-# trial 76. Its initial HPO ranking predated the cost-aware evaluation fix;
+# trial 169. Its initial HPO ranking predated the cost-aware evaluation fix;
 # the committed product run records the corrected-policy evaluation.
-run_label: model_b_synthetic_trial_076
-episodes: 22000
+run_label: model_b_synthetic_trial_169
+episodes: 54000
 training_mode: synthetic
-learning_rate: 0.10
+learning_rate: 0.05
 learning_rate_schedule: constant
 visit_learning_rate_decay: 0.01
 discount_factor: 0.95
-epsilon: 0.30
+epsilon: 0.50
 min_epsilon: 0.02
 epsilon_decay: 0.95
 state_precision: 2

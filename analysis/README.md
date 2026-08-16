@@ -18,5 +18,5 @@ dataset. Run scripts from the repository root.
 - `diagnostics/`: focused controlled investigations of policy behaviour.
 
 The selected product model is fully self-contained in
-`runs/model_b_synthetic_trial_076/`; do not scatter its artifacts across topic
+`runs/model_b_synthetic_trial_169/`; do not scatter its artifacts across topic
 folders. Trial 371 remains a legacy research run.

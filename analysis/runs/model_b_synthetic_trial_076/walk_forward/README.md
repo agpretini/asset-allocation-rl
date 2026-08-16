@@ -6,5 +6,5 @@ scratch on train plus validation. Synthetic simulator parameters are fitted
 only on the corresponding historical training window, while validation and
 test observations are always real historical data.
 
-The committed results use the selected Model B trial 76 configuration and the
-cost-aware frozen decision policy.
+The historical results use the superseded Model B trial 76 configuration and
+the cost-aware frozen decision policy. Trial 169 is the active selected model.
