@@ -1,6 +1,8 @@
 """Yahoo Finance data access."""
 
 from collections.abc import Sequence
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import yfinance as yf
@@ -32,18 +34,22 @@ def download_close_prices(
     return close_prices.sort_index()
 
 
-def resample_to_month_end(daily_prices: pd.DataFrame) -> pd.DataFrame:
+def resample_to_month_end(
+    daily_prices: pd.DataFrame,
+    end_date: str | None = None,
+) -> pd.DataFrame:
     """Convert daily close prices to completed month-end close prices."""
     if not isinstance(daily_prices.index, pd.DatetimeIndex):
         raise ValueError("daily_prices must use a DatetimeIndex")
 
-    monthly_prices = daily_prices.resample("ME").last()
-    last_observation_date = daily_prices.index.max().normalize()
-    last_month_end = last_observation_date + pd.offsets.MonthEnd(0)
-    if last_observation_date < last_month_end:
-        monthly_prices = monthly_prices.loc[monthly_prices.index < last_month_end]
-
-    return monthly_prices
+    # Yahoo's end date is exclusive. Completion depends on the calendar cutoff,
+    # not on whether a quote exists on a weekend or holiday at month-end.
+    cutoff = pd.Timestamp(
+        end_date or datetime.now(ZoneInfo("America/Argentina/Buenos_Aires")).date(),
+    )
+    completed_end = cutoff.to_period("M").start_time
+    prices = daily_prices.loc[daily_prices.index < completed_end]
+    return prices.resample("ME").last()
 
 
 def _extract_close_prices(

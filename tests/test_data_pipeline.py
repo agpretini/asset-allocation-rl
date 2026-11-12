@@ -7,6 +7,7 @@ import pytest
 
 import data.dataset as dataset_module
 from data.dataset import build_monthly_dataset, write_monthly_dataset
+from data.yahoo import resample_to_month_end
 
 
 @pytest.fixture
@@ -94,10 +95,16 @@ def test_monthly_returns_use_current_and_prior_prices_only(
 
 
 def test_incomplete_current_month_is_excluded(yahoo_prices: pd.DataFrame) -> None:
-    del yahoo_prices
-    dataset = build_monthly_dataset()
+    dataset = resample_to_month_end(yahoo_prices, end_date="2016-04-30")
 
     assert dataset.index.max() == pd.Timestamp("2016-03-31")
+
+
+def test_completed_weekend_month_is_kept(yahoo_prices: pd.DataFrame) -> None:
+    dataset = resample_to_month_end(yahoo_prices, end_date="2016-05-01")
+
+    assert dataset.index.max() == pd.Timestamp("2016-04-30")
+    assert dataset.iloc[-1]["GGAL"] == 13.0
 
 
 def test_monthly_dataset_can_be_written_as_parquet(

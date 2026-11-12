@@ -223,6 +223,13 @@ The environment operates on a fixed decision frequency.
 
 The specific frequency used by the implementation is defined in `DATA_DECISIONS.md`.
 
+The local API retrains through the last completed calendar month in Buenos
+Aires, using the committed selected configuration unless another named fixed
+configuration is supplied. Its first version predicts only the month directly
+after the saved dataset's cutoff. Prediction uses the saved Q-table and dataset
+without training, downloading new data or accepting historical/further-future
+targets. Each successful prediction is persisted locally and logged.
+
 ---
 
 ## Transition Dynamics

@@ -18,6 +18,19 @@ If an implementation detail conflicts with `PRODUCT_SPEC.md`, the product specif
 
 # High-Level Architecture
 
+The local HTTP adapter lives in `src/api/main.py`. Its service coordinates
+existing dataset and model functions without implementing model logic.
+`prediction/next_allocation.py` exposes separate training and inference
+operations; research wrappers compose them. Named operational configurations
+are loaded by `config/models.py` from `src/config/`.
+
+The API keeps immutable model/data/metadata snapshots under `artifacts/model/`
+and publishes a snapshot through an atomic `current.json` pointer replacement.
+Predictions are saved under `artifacts/predictions/`. Runtime files are ignored
+by Git and persisted through a Docker bind mount. One Uvicorn worker and an
+in-process lock serialize operations; retraining is synchronous. See
+`src/api/README.md` for the HTTP contract and commands.
+
 The project is organized into the following layers:
 
 ```text

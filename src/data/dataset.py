@@ -26,7 +26,9 @@ def build_monthly_dataset(
         start_date=config["start_date"],
         end_date=end_date,
     )
-    monthly_prices = impute_missing_prices(resample_to_month_end(daily_prices))
+    monthly_prices = impute_missing_prices(
+        resample_to_month_end(daily_prices, end_date=end_date),
+    )
     component_returns = monthly_prices.pct_change()
 
     asset_returns = _build_asset_returns(component_returns, config)

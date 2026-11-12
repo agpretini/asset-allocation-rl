@@ -1,8 +1,11 @@
 # Prediction Layer
 
-`next_allocation.py` trains the configured Model B policy on the available
-history and produces two signals: a myopic latest-return reference and the
-published Model B strategic allocation.
+`next_allocation.py` separates `train_allocation_model` (training only) from
+`predict_allocations` (inference from an existing Q-table, without training or
+changing it). The existing `predict_next_allocation` and
+`predict_next_allocations` functions compose these operations for research
+callers. They produce a myopic latest-return reference and the published
+Model B strategic allocation. The API uses the separate operations.
 
 The published allocation is the deterministic modal target across all 286
 possible starting portfolios for the current market state. Its `score` is the
@@ -31,10 +34,11 @@ Training parameters are intentionally not duplicated as CLI arguments. The
 runner reads them from:
 
 ```text
-analysis/hyperparameter_search/current/best_hyperparameters.yaml
+src/config/selected_synthetic_model.yaml
 ```
 
-That file supplies `episodes`, `training_mode` (`historical` or `synthetic`),
+The shared `config/models.py` loader reads `episodes`, `training_mode`
+(`historical` or `synthetic`),
 seed, learning rate and schedule, discount factor, epsilon schedule, and state
 precision. The current product configuration is the selected Model B setup from
 trial 169: 54,000 synthetic episodes, seed 42, constant learning rate 0.05,

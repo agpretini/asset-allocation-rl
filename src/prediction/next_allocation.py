@@ -12,6 +12,7 @@ from agents.training import (
     TrainingResult,
     train_q_learning_agent,
 )
+from env.action_space import generate_action_space
 from env.portfolio_env import PortfolioEnv, calculate_turnover
 from features.state_builder import PortfolioContext, StateBuilder
 from features.transforms import COMPACT_REGIME_FEATURE_MODE, FeatureMode
@@ -77,14 +78,37 @@ def predict_next_allocations(
     simulation_config: SimulationConfig | None = None,
 ) -> tuple[list[AllocationPrediction], QLearningAgent, pd.DataFrame]:
     """Train on all data and produce myopic and infinite-horizon signals."""
-    starting_weights = current_weights or [0.25, 0.25, 0.25, 0.25]
+    training_result = train_allocation_model(
+        dataset,
+        training_config,
+        feature_mode,
+        simulation_config,
+        current_weights,
+    )
+    predictions = predict_allocations(
+        dataset,
+        training_result.agent,
+        current_weights,
+        feature_mode,
+    )
+    return predictions, training_result.agent, training_result.history
+
+
+def train_allocation_model(
+    dataset: pd.DataFrame,
+    training_config: QLearningTrainingConfig,
+    feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
+    simulation_config: SimulationConfig | None = None,
+    current_weights: list[float] | None = None,
+) -> TrainingResult:
+    """Train a policy without producing a prediction."""
     state_builder = StateBuilder(dataset, feature_mode=feature_mode)
     env = PortfolioEnv(
         dataset=dataset,
         state_builder=state_builder,
-        initial_weights=starting_weights,
+        initial_weights=current_weights or [0.25, 0.25, 0.25, 0.25],
     )
-    training_result = _train_prediction_agent(
+    return _train_prediction_agent(
         dataset=dataset,
         env=env,
         training_config=training_config,
@@ -92,38 +116,45 @@ def predict_next_allocations(
         simulation_config=simulation_config,
     )
 
+
+def predict_allocations(
+    dataset: pd.DataFrame,
+    agent: QLearningAgent,
+    current_weights: list[float] | None = None,
+    feature_mode: FeatureMode = COMPACT_REGIME_FEATURE_MODE,
+) -> list[AllocationPrediction]:
+    """Predict from an existing Q-table without training or changing it."""
+    starting_weights = current_weights or [0.25, 0.25, 0.25, 0.25]
+    state_builder = StateBuilder(dataset, feature_mode=feature_mode)
+    action_space = generate_action_space()
     latest_index = len(dataset) - 1
     latest_state = state_builder.build_state(
         latest_index,
         PortfolioContext(weights=starting_weights),
     )
     q_values, state_source, nearest_distance = _resolve_q_values(
-        agent=training_result.agent,
+        agent=agent,
         state=latest_state,
     )
     signal_date = pd.Timestamp(dataset.index[latest_index])
     target_period = signal_date + pd.offsets.MonthEnd(1)
     myopic_prediction = _build_myopic_prediction(
         dataset=dataset,
-        action_space=env.action_space,
+        action_space=action_space,
         current_weights=starting_weights,
         signal_date=signal_date,
         target_period=target_period,
     )
     infinite_horizon_prediction = _build_modal_model_b_prediction(
         q_values=q_values,
-        action_space=env.action_space,
+        action_space=action_space,
         current_weights=starting_weights,
         signal_date=signal_date,
         target_period=target_period,
         state_source=state_source,
         nearest_distance=nearest_distance,
     )
-    return (
-        [myopic_prediction, infinite_horizon_prediction],
-        training_result.agent,
-        training_result.history,
-    )
+    return [myopic_prediction, infinite_horizon_prediction]
 
 
 def _train_prediction_agent(
@@ -256,7 +287,7 @@ def _resolve_q_values(
         nearest_values, distance = nearest
         return nearest_values, "nearest_learned_state", distance
 
-    return agent.q_values_for_state(state), "unseen_unlearned_state", 0.0
+    return [0.0] * agent.n_actions, "unseen_unlearned_state", 0.0
 
 
 def _find_nearest_learned_state(

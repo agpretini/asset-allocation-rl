@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -92,29 +91,10 @@ def _prediction_output_dir(target_period: str, feature_mode: str) -> Path:
 
 
 def _load_best_training_config() -> QLearningTrainingConfig:
-    """Load the best known Q-learning hyperparameters."""
-    from agents.training import QLearningTrainingConfig
+    """Use the same fixed selected configuration as the API."""
+    from config.models import load_model_config
 
-    payload = yaml.safe_load(
-        Path(
-            "analysis/hyperparameter_search/current/best_hyperparameters.yaml"
-        ).read_text(
-            encoding="utf-8",
-        ),
-    )
-    return QLearningTrainingConfig(
-        episodes=int(payload["episodes"]),
-        training_mode=payload.get("training_mode", "historical"),
-        learning_rate=float(payload["learning_rate"]),
-        learning_rate_schedule=payload.get("learning_rate_schedule", "constant"),
-        visit_learning_rate_decay=float(payload.get("visit_learning_rate_decay", 0.01)),
-        discount_factor=float(payload["discount_factor"]),
-        epsilon=float(payload["epsilon"]),
-        min_epsilon=float(payload["min_epsilon"]),
-        epsilon_decay=float(payload["epsilon_decay"]),
-        state_precision=int(payload["state_precision"]),
-        seed=int(payload["seed"]),
-    )
+    return load_model_config()[0]
 
 
 if __name__ == "__main__":

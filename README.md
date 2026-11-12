@@ -12,6 +12,8 @@ historical backtesting, and a regime-based synthetic market simulator.
 - `experiments/` contains HPO and tracking runners; their results are written
   under `analysis/hyperparameter_search/`.
 - `tests/` contains the pytest suite.
+- `src/api/` exposes the local FastAPI service; `artifacts/` holds its
+  Git-ignored model snapshots and predictions.
 
 Start with [analysis/README.md](analysis/README.md) for results and with the
 README in each `src` package for the production pipeline.
@@ -41,6 +43,33 @@ selected run is `analysis/runs/model_b_synthetic_trial_169/`. Its August 2026
 strategic Model B signal, from the July 2026 close, is 10% Argentine equities,
 50% CEDEARs, 30% S&P 500, and 10% Gold; see its dated forecast directory for
 the full decision record and assumptions.
+
+## Local API and Docker
+
+```bash
+uv sync
+uv run uvicorn api.main:app --app-dir src --host 127.0.0.1 --port 8000 --workers 1
+```
+
+Open <http://127.0.0.1:8000/docs>. `POST /retrain` refreshes completed-month
+data and trains the selected model; an optional JSON body chooses another
+configuration: `{"config":"selected_synthetic_model"}`. `POST /predict`
+accepts `{"month":"2026-10"}`, uses the saved model without retraining, and
+saves and logs the allocation. The requested month must immediately follow
+the model's data cutoff. Retraining is synchronous; use one worker.
+
+```bash
+docker build -t asset-allocation-rl .
+docker run --rm --name asset-allocation-api \
+  -p 127.0.0.1:8000:8000 \
+  -v "$(pwd)/artifacts:/app/artifacts" \
+  asset-allocation-rl
+```
+
+Docker must be installed and running; no Docker account is required for this
+local setup. The bind mount keeps model snapshots and predictions in the
+repository after the container stops. See [API usage](src/api/README.md) for
+request examples, configuration selection and error behavior.
 
 ## How the Model Works
 

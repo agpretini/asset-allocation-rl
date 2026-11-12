@@ -7,6 +7,12 @@ dist/
 build/
 *.egg-info/
 
+# Local API snapshots and predictions; keep their documentation versioned.
+artifacts/model/*
+!artifacts/model/README.md
+artifacts/predictions/*
+!artifacts/predictions/README.md
+
 .DS_Store
 **/.DS_Store
 

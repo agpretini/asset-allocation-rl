@@ -2,12 +2,16 @@
 
 import pandas as pd
 
+from agents.q_learning import QLearningAgent
 from agents.training import QLearningTrainingConfig
 from prediction.next_allocation import (
+    predict_allocations,
     predict_next_allocation,
     predict_next_allocations,
     select_modal_model_b_action,
+    train_allocation_model,
 )
+from simulation.market_simulator import SimulationConfig
 
 
 def test_modal_model_b_action_uses_lowest_id_for_modal_tie() -> None:
@@ -74,6 +78,27 @@ def test_predict_next_allocations_accepts_normalized_binned_features() -> None:
     )
 
     assert len(predictions) == 2
+
+
+def test_inference_does_not_initialize_unseen_q_states() -> None:
+    agent = QLearningAgent(n_actions=286)
+    predictions = predict_allocations(_make_prediction_dataset(), agent)
+
+    assert agent.q_table == {}
+    assert predictions[-1].state_source == "unseen_unlearned_state"
+
+
+def test_separate_training_supports_synthetic_model_b() -> None:
+    result = train_allocation_model(
+        _make_prediction_dataset(),
+        QLearningTrainingConfig(episodes=2, training_mode="synthetic", seed=9),
+        simulation_config=SimulationConfig(episode_length=16, seed=9),
+    )
+
+    assert len(result.history) == 2
+    assert set(result.history["training_mode"]) == {"synthetic"}
+    assert result.agent.q_table
+    assert all(len(key.split("|")) == 4 for key in result.agent.q_table)
 
 
 def _make_prediction_dataset() -> pd.DataFrame:

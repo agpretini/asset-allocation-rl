@@ -5,15 +5,18 @@ description = "Reinforcement learning research for dynamic asset allocation."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.162.0",
     "numpy>=2.0",
     "pandas>=2.2",
     "pyarrow>=16.0",
     "pyyaml>=6.0",
+    "uvicorn>=0.54.0",
     "yfinance>=0.2.66",
 ]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=8.0",
     "ruff>=0.11",
 ]
